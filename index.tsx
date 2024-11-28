@@ -1,4 +1,7 @@
 import './src/util/handleError';
+import { memo, useRef, useState } from './src/teact/teact';
+import type { ApiSticker } from './src/api/types';
+
 
 // Ensure process.env exists
 if (typeof process === 'undefined' || !process.env) {
@@ -15,6 +18,7 @@ import { enableStrict, requestMutation } from './src/fasterdom/fasterdom';
 import { betterView } from './src/util/betterView';
 import updateWebmanifest from './src/util/updateWebmanifest';
 import AnimatedSticker from './src/AnimatedSticker';
+import StickerView from './src/StickerView';
 
 if (STRICTERDOM_ENABLED) {
 }
@@ -45,8 +49,26 @@ async function init() {
 
   //https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs
   //https://autostatus.nashruz.uz/app/download/thumbnails/5366316836101038579.webp
+  let containerRef = useRef<HTMLDivElement>(null);
+
   TeactDOM.render(
     <div>
+      <StickerView
+      containerRef={containerRef}
+      sticker={
+        {
+          id: '',
+          mediaType: "sticker",
+          stickerSetInfo: {
+            shortName: ''
+          },
+          isLottie: false,
+          isVideo: false,
+          isCustomEmoji: true
+        }
+      }
+      />
+
       <div style={{display:'flex'}}>
         {[1,2,3,4,5,6,7,8,9,10].map(elem=>
         <div style={{display:'flex',flexDirection:'column'}}>
