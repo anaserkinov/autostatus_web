@@ -1,0 +1,83 @@
+import type {
+  ApiDimensions,
+  ApiPhoto, ApiSticker, ApiThumbnail, ApiVideo, MediaContainer,
+} from './messages';
+
+export type ApiInlineResultType = (
+  'article' | 'audio' | 'contact' | 'document' | 'game' | 'gif' | 'location' | 'mpeg4_gif' |
+  'photo' | 'sticker' | 'venue' | 'video' | 'voice' | 'file'
+);
+
+export interface ApiWebDocument {
+  mediaType: 'webDocument';
+  url: string;
+  size: number;
+  mimeType: string;
+  accessHash?: string;
+  dimensions?: ApiDimensions;
+}
+
+export interface ApiBotInlineResult {
+  id: string;
+  queryId: string;
+  type: ApiInlineResultType;
+  title?: string;
+  description?: string;
+  url?: string;
+  webThumbnail?: ApiWebDocument;
+}
+
+export interface ApiBotInlineMediaResult {
+  id: string;
+  queryId: string;
+  type: ApiInlineResultType;
+  title?: string;
+  description?: string;
+  sticker?: ApiSticker;
+  photo?: ApiPhoto;
+  gif?: ApiVideo;
+  thumbnail?: ApiThumbnail;
+}
+
+export interface ApiBotInlineSwitchPm {
+  text: string;
+  startParam: string;
+}
+
+export interface ApiBotInlineSwitchWebview {
+  text: string;
+  url: string;
+}
+
+export interface ApiBotCommand {
+  botId: string;
+  command: string;
+  description: string;
+}
+
+type ApiBotMenuButtonCommands = {
+  type: 'commands';
+};
+
+type ApiBotMenuButtonWebApp = {
+  type: 'webApp';
+  text: string;
+  url: string;
+};
+
+export type ApiBotMenuButton = ApiBotMenuButtonWebApp | ApiBotMenuButtonCommands;
+
+export interface ApiBotInfo {
+  botId: string;
+  commands?: ApiBotCommand[];
+  description?: string;
+  photo?: ApiPhoto;
+  gif?: ApiVideo;
+  menuButton: ApiBotMenuButton;
+  privacyPolicyUrl?: string;
+  hasPreviewMedia?: true;
+}
+
+export interface ApiBotPreviewMedia extends MediaContainer {
+  date: number;
+}
