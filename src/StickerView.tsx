@@ -12,11 +12,11 @@ import * as mediaLoader from './util/mediaLoader';
 import useColorFilter from './hooks/stickers/useColorFilter';
 import useFlag from './hooks/useFlag';
 import useDevicePixelRatio from './hooks/window/useDevicePixelRatio';
-import { getStickerMediaHash } from './global/helpers';
+import { getStickerMediaHash } from './global/helpers/messageMedia';
 
 import AnimatedSticker from './AnimatedSticker';
 
-import styles from './StickerView.module.scss';
+import './StickerView.scss';
 
 type OwnProps = {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -74,7 +74,6 @@ const StickerView: FC<OwnProps> = ({
 
   const isVideo = sticker.isVideo;
   const isStatic = !isLottie && !isVideo;
-  const previewMediaHash = getStickerMediaHash(sticker, 'preview');
 
   const dpr = useDevicePixelRatio();
 
@@ -83,23 +82,18 @@ const StickerView: FC<OwnProps> = ({
   const shouldPlay = !noPlay;
   const shouldLoad =  !noLoad;
 
+  const thumbDataUri = useThumbnail(sticker);
 
-  const cachedPreview = mediaLoader.getFromMemory(previewMediaHash);
   const shouldForcePreview =  (isStatic ? isSmall : noPlay);
-  const shouldLoadPreview = !customColor && !cachedPreview && (shouldForcePreview);
-  const previewMediaData = useMedia(previewMediaHash, !shouldLoadPreview);
-  const withPreview = shouldLoadPreview || cachedPreview;
+  const shouldLoadPreview = !customColor && (shouldForcePreview);
+  const withPreview = shouldLoadPreview;
 
-  const shouldSkipFullMedia = Boolean(shouldForcePreview || (
-    fullMediaHash === previewMediaHash && (cachedPreview || previewMediaData)
-  ));
-  const fullMediaData = useMedia(fullMediaHash || `sticker${id}`, !shouldLoad || shouldSkipFullMedia);
-  const shouldRenderFullMedia = !shouldSkipFullMedia && fullMediaData;
+  const fullMediaData = useMedia(fullMediaHash || `sticker${id}`, !shouldLoad);
+  const shouldRenderFullMedia = fullMediaData;
   const [isPlayerReady, markPlayerReady] = useFlag();
   const isFullMediaReady = shouldRenderFullMedia && (isStatic || isPlayerReady);
 
-  const thumbDataUri = useThumbnail(sticker);
-  const thumbData = cachedPreview || previewMediaData || thumbDataUri;
+  const thumbData = thumbDataUri;
   const isThumbOpaque = sharedCanvasRef && !withTranslucentThumb;
 
   const noCrossTransition = Boolean(isLottie && withPreview);
@@ -124,18 +118,18 @@ const StickerView: FC<OwnProps> = ({
   return (
     <>
       <img
-        ref={thumbRef}
-        src={thumbData}
-        className={buildClassName(
-          styles.thumb,
-          noCrossTransition && styles.noTransition,
-          isThumbOpaque && styles.thumbOpaque,
-          thumbClassName,
-          'sticker-media',
-        )}
-        style={filterStyle}
-        alt=""
-        draggable={false}
+         ref={thumbRef}
+         src={thumbData}
+         className={buildClassName(
+          'thumb',
+          noCrossTransition && 'no-transition',
+          isThumbOpaque && 'thumb-opaque',
+           thumbClassName,
+           'sticker-media',
+         )}
+         style={filterStyle}
+         alt=""
+         draggable={false}
       />
       {shouldRenderFullMedia && (isLottie ? (
         <AnimatedSticker
@@ -144,8 +138,8 @@ const StickerView: FC<OwnProps> = ({
           renderId={renderId}
           size={size}
           className={buildClassName(
-            styles.media,
-            (noCrossTransition || isThumbOpaque) && styles.noTransition,
+            "media",
+            (noCrossTransition || isThumbOpaque) && "no-transition",
             fullMediaClassName,
           )}
           tgsUrl={fullMediaData}
@@ -164,7 +158,11 @@ const StickerView: FC<OwnProps> = ({
       ) : (
         <img
           ref={fullMediaRef as React.RefObject<HTMLImageElement>}
-          className={buildClassName(styles.media, fullMediaClassName, 'sticker-media')}
+          className={buildClassName(
+            "media",
+            (noCrossTransition || isThumbOpaque) && "no-transition",
+            fullMediaClassName,
+          )}
           src={fullMediaData}
           alt={emoji}
           style={filterStyle}

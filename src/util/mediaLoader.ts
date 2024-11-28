@@ -16,6 +16,8 @@ import {
   IS_PROGRESSIVE_SUPPORTED,
 } from './windowEnvironment';
 
+import { callApi } from '../api/methods';
+
 const asCacheApiType = {
   [ApiMediaFormat.BlobUrl]: cacheApi.Type.Blob,
   [ApiMediaFormat.Text]: cacheApi.Type.Text,
@@ -25,7 +27,7 @@ const asCacheApiType = {
 
 const PROGRESSIVE_URL_PREFIX = `${IS_PACKAGED_ELECTRON ? ELECTRON_HOST_URL : '.'}/progressive/`;
 const URL_DOWNLOAD_PREFIX = './download/';
-const RETRY_MEDIA_AFTER = 2000;
+const RETRY_MEDIA_AFTER = 1000;
 const MAX_MEDIA_RETRIES = 3;
 
 const memoryCache = new Map<string, ApiPreparedMedia>();
@@ -91,7 +93,6 @@ export function getFromMemory(url: string) {
   return memoryCache.get(url) as ApiPreparedMedia;
 }
 
-
 export function removeCallback(url: string, callbackUniqueId: string) {
   const callbacks = progressCallbacks.get(url);
   if (!callbacks) return;
@@ -114,26 +115,25 @@ function getDownloadUrl(url: string) {
   return Promise.resolve(`${URL_DOWNLOAD_PREFIX}${url}`);
 }
 
-async function fetchFromCacheOrRemote(
-  url: string, mediaFormat: ApiMediaFormat, isHtmlAllowed: boolean, retryNumber = 0,
+export async function fetchFromCacheOrRemote(
+  url: string,
+  mediaFormat: ApiMediaFormat,
+  isHtmlAllowed = false,
+  retryNumber = 0,
+  onProgress?: (progress: number) => void,
 ): Promise<string> {
-  if (!MEDIA_CACHE_DISABLED) {
-    const cacheName = url.startsWith('avatar') ? MEDIA_CACHE_NAME_AVATARS : MEDIA_CACHE_NAME;
-    const cached = await cacheApi.fetch(cacheName, url, asCacheApiType[mediaFormat]!, isHtmlAllowed);
+  const cacheName = url.startsWith('avatar') ? MEDIA_CACHE_NAME_AVATARS : MEDIA_CACHE_NAME;
+  const cached = await cacheApi.fetch(cacheName, url, asCacheApiType[mediaFormat]!, isHtmlAllowed);
 
-    if (cached) {
-      let media = cached;
+  if (cached) {
+    let media = cached;
 
-      const prepared = prepareMedia(media);
+    const prepared = prepareMedia(media);
 
-      memoryCache.set(url, prepared);
+    memoryCache.set(url, prepared);
 
-      return prepared;
-    }
+    return prepared;
   }
-
-  const onProgress = makeOnProgress(url);
-  cancellableCallbacks.set(url, onProgress);
 
   const remote = await callApi('downloadMedia', { url, mediaFormat, isHtmlAllowed }, onProgress);
   if (!remote) {
@@ -148,23 +148,11 @@ async function fetchFromCacheOrRemote(
     return fetchFromCacheOrRemote(url, mediaFormat, isHtmlAllowed, retryNumber + 1);
   }
 
-  let { mimeType } = remote;
-  let prepared = prepareMedia(remote.dataBlob);
+  const prepared = prepareMedia(remote.dataBlob);
 
   memoryCache.set(url, prepared);
 
   return prepared;
-}
-
-function makeOnProgress(url: string) {
-  const onProgress: ApiOnProgress = (progress: number) => {
-    progressCallbacks.get(url)?.forEach((callback) => {
-      callback(progress);
-      if (callback.isCanceled) onProgress.isCanceled = true;
-    });
-  };
-
-  return onProgress;
 }
 
 function prepareMedia(mediaData: Exclude<ApiParsedMedia, ArrayBuffer>): ApiPreparedMedia {

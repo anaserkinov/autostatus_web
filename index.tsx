@@ -1,7 +1,4 @@
 import './src/util/handleError';
-import { memo, useRef, useState } from './src/teact/teact';
-import type { ApiSticker } from './src/api/types';
-
 
 // Ensure process.env exists
 if (typeof process === 'undefined' || !process.env) {
@@ -10,6 +7,8 @@ if (typeof process === 'undefined' || !process.env) {
 
 import React from './src/teact/teact';
 import TeactDOM from './src/teact/teact-dom';
+import { memo, useRef, useState } from './src/teact/teact';
+import type { ApiSticker } from './src/api/types';
 
 import {
   DEBUG, STRICTERDOM_ENABLED,
@@ -25,6 +24,54 @@ if (STRICTERDOM_ENABLED) {
 
 // Set compatibility test to true
 (window as any).isCompatTestPassed = true;
+
+const App = memo(() => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div>
+      <div>
+      <StickerView
+        containerRef={containerRef}
+        size={48}
+        fullMediaHash='https://autostatus.nashruz.uz/app/download/thumbnails/5366316836101038579.webp'
+        noPlay = {false}
+
+        sticker={{
+          id: '453454',
+          mediaType: "sticker",
+          width: 48,
+          height: 48,
+          stickerSetInfo: {
+            shortName: ''
+          },
+          isLottie: false,
+          isVideo: false,
+          isCustomEmoji: true,
+          isFree: true
+        }}
+      />
+      </div>
+
+      {/* <div style={{display:'flex'}}>
+        {[1,2,3,4,5,6,7,8,9,10].map(elem =>
+          <div key={elem} style={{display:'flex',flexDirection:'column'}}>
+            {[1,2,3,4,5,6,7,8,9,10].map(innerElem =>
+              <AnimatedSticker 
+                key={`${elem}-${innerElem}`}
+                renderId={String(innerElem)}
+                size={48}
+                tgsUrl='https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs'
+                onLoad={() => console.log('Sticker loaded!')}
+                play={true}
+              />
+            )}
+          </div>
+        )}
+      </div> */}
+    </div>
+  );
+});
 
 init();
 
@@ -42,49 +89,13 @@ async function init() {
     return;
   }
 
-  console.log('Attempting to render AnimatedSticker...');
+  console.log('Attempting to render App...');
 
   const rootElement = document.getElementById('root');
   console.log('Root element:', rootElement);
 
-  //https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs
-  //https://autostatus.nashruz.uz/app/download/thumbnails/5366316836101038579.webp
-  let containerRef = useRef<HTMLDivElement>(null);
-
   TeactDOM.render(
-    <div>
-      <StickerView
-      containerRef={containerRef}
-      sticker={
-        {
-          id: '',
-          mediaType: "sticker",
-          stickerSetInfo: {
-            shortName: ''
-          },
-          isLottie: false,
-          isVideo: false,
-          isCustomEmoji: true
-        }
-      }
-      />
-
-      <div style={{display:'flex'}}>
-        {[1,2,3,4,5,6,7,8,9,10].map(elem=>
-        <div style={{display:'flex',flexDirection:'column'}}>
-        {[1,2,3,4,5,6,7,8,9,10].map(elem=>
-        <AnimatedSticker 
-          renderId={elem as any}
-          size={48}
-          tgsUrl='https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs'
-          onLoad={() => console.log('Sticker loaded!')}
-          play={true}
-          />
-          )}
-        </div>
-        )}
-      </div>
-    </div>,
+    <App />,
     rootElement!,
   );
 

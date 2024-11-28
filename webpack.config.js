@@ -27,7 +27,7 @@ module.exports = {
         main: ['process/browser', './index.tsx']
     },
     resolve: {
-        extensions: ['.tsx', '.ts', '.js', '.wasm'],
+        extensions: ['.tsx', '.ts', '.js', '.wasm', '.scss'],
         fallback: {
             process: require.resolve('process/browser'),
         },
@@ -42,15 +42,30 @@ module.exports = {
         syncWebAssembly: true,
     },
     module: {
-        rules: [{
-            test: /\.(ts|tsx|js|mjs|cjs)$/,
-            loader: 'babel-loader',
-            exclude: /node_modules/,
-        },
-        {
-            test: /\.wasm$/,
-            type: 'asset/resource',
-        }]
+        rules: [
+            {
+                test: /\.(ts|tsx|js|mjs|cjs)$/,
+                loader: 'babel-loader',
+                exclude: /node_modules/,
+            },
+            {
+                test: /\.wasm$/,
+                type: 'asset/resource',
+            },
+            {
+                test: /\.scss$/,
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            modules: false
+                        }
+                    },
+                    'sass-loader'
+                ]
+            }
+        ]
     },
     output: {
         filename: 'main.js',

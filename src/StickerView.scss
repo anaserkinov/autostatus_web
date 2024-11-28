@@ -3,7 +3,7 @@
   height: 100%;
   z-index: 1;
 
-  &:global(.closing) {
+  &.closing {
     transition-delay: 150ms;
   }
 }
@@ -26,7 +26,7 @@
 
 .thumb, .media {
   // @optimization
-  &:not(:global(.shown)) {
+  &:not(.shown) {
     display: block !important;
   }
 }
