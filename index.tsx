@@ -56,7 +56,6 @@ async function init() {
           size={48}
           tgsUrl='https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs'
           onLoad={() => console.log('Sticker loaded!')}
-          onError={(error) => console.error('Sticker error:', error)}
           play={true}
           />
           )}
