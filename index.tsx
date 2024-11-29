@@ -30,13 +30,22 @@ const App = memo(() => {
 
   return (
     <div>
-      <div>
+      <div 
+            ref={containerRef}
+            style={{
+              width: '48px',
+              height: '48px',
+              position: 'relative'
+            }}
+            >
       <StickerView
         containerRef={containerRef}
         size={48}
-        fullMediaHash='https://autostatus.nashruz.uz/app/download/thumbnails/5366316836101038579.webp'
-        noPlay = {false}
-
+        // Using proxy for both thumbnail and sticker
+        fullMediaHash='https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs'
+        noPlay={false}
+        fullMediaClassName="full-media"
+        shouldLoop = {true}
         sticker={{
           id: '453454',
           mediaType: "sticker",
@@ -45,10 +54,15 @@ const App = memo(() => {
           stickerSetInfo: {
             shortName: ''
           },
-          isLottie: false,
+          isLottie: true,
           isVideo: false,
           isCustomEmoji: true,
-          isFree: true
+          isFree: true,
+          thumbnail: {
+            width: 128,
+            height: 128,
+            dataUri: "https://autostatus.nashruz.uz/app/download/thumbnails/5366316836101038579.webp"
+          }
         }}
       />
       </div>

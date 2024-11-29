@@ -16,7 +16,7 @@ import { getStickerMediaHash } from './global/helpers/messageMedia';
 
 import AnimatedSticker from './AnimatedSticker';
 
-import './StickerView.scss';
+import './StickerView.module.scss';
 
 type OwnProps = {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -80,11 +80,11 @@ const StickerView: FC<OwnProps> = ({
   const filterStyle = useColorFilter(customColor);
 
   const shouldPlay = !noPlay;
-  const shouldLoad =  !noLoad;
+  const shouldLoad = !noLoad;
 
   const thumbDataUri = useThumbnail(sticker);
 
-  const shouldForcePreview =  (isStatic ? isSmall : noPlay);
+  const shouldForcePreview = (isStatic ? isSmall : noPlay);
   const shouldLoadPreview = !customColor && (shouldForcePreview);
   const withPreview = shouldLoadPreview;
 
@@ -117,20 +117,24 @@ const StickerView: FC<OwnProps> = ({
 
   return (
     <>
-      <img
-         ref={thumbRef}
-         src={thumbData}
-         className={buildClassName(
-          'thumb',
-          noCrossTransition && 'no-transition',
-          isThumbOpaque && 'thumb-opaque',
-           thumbClassName,
-           'sticker-media',
-         )}
-         style={filterStyle}
-         alt=""
-         draggable={false}
-      />
+      {
+        thumbData && !isFullMediaReady && (
+          <img
+            ref={thumbRef}
+            src={thumbData}
+            className={buildClassName(
+              'thumb',
+              noCrossTransition && 'no-transition',
+              isThumbOpaque && 'thumb-opaque',
+              thumbClassName,
+              'sticker-media',
+            )}
+            style={filterStyle}
+            alt=""
+            draggable={false}
+          />
+        )
+      }
       {shouldRenderFullMedia && (isLottie ? (
         <AnimatedSticker
           ref={fullMediaRef as React.RefObject<HTMLDivElement>}
@@ -160,8 +164,8 @@ const StickerView: FC<OwnProps> = ({
           ref={fullMediaRef as React.RefObject<HTMLImageElement>}
           className={buildClassName(
             "media",
-            (noCrossTransition || isThumbOpaque) && "no-transition",
             fullMediaClassName,
+            'sticker-media'
           )}
           src={fullMediaData}
           alt={emoji}
