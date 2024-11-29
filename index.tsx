@@ -1,21 +1,16 @@
-import './src/util/handleError';
+import './animated_sticker/src/util/handleError';
 
 // Ensure process.env exists
 if (typeof process === 'undefined' || !process.env) {
   (window as any).process = { env: { NODE_ENV: 'development' } };
 }
 
-import React from './src/teact/teact';
-import TeactDOM from './src/teact/teact-dom';
-import { memo, useRef, useState } from './src/teact/teact';
+import React from './animated_sticker/src/teact/teact';
+import TeactDOM from './animated_sticker/src/teact/teact-dom';
+import { memo, useRef, useState } from './animated_sticker/src/teact/teact';
 
-import {
-  DEBUG, STRICTERDOM_ENABLED,
-} from './src/config';
-import StickerView from './src/StickerView';
-
-if (STRICTERDOM_ENABLED) {
-}
+import { DEBUG } from './animated_sticker/src/config';
+import StickerView from './animated_sticker/src/StickerView';
 
 // Set compatibility test to true
 (window as any).isCompatTestPassed = true;

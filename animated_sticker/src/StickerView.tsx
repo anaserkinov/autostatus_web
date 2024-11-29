@@ -1,7 +1,7 @@
-import type { FC } from '../src/teact/teact';
-import React, { memo, useMemo, useRef } from '../src/teact/teact';
+import type { FC } from './teact/teact';
+import React, { memo, useMemo, useRef } from './teact/teact';
 
-import type { ApiSticker } from '../src/api/types';
+import type { ApiSticker } from './api/types';
 import buildClassName from './util/buildClassName';
 import useUniqueId from './hooks/useUniqueId';
 import useMediaTransition from './hooks/useMediaTransition';

@@ -1,5 +1,5 @@
 {
-  "name": "autostatus",
+  "name": "animated_sticker",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "build": "webpack --mode production"
   },
   "keywords": [],
-  "author": "",
+  "author": "Anas",
   "license": "ISC",
   "description": "",
   "dependencies": {
@@ -30,9 +30,6 @@
     "sass": "^1.81.0",
     "sass-loader": "^16.0.3",
     "style-loader": "^4.0.0",
-    "typescript": "^5.7.2",
-    "webpack": "^5.96.1",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.1.0"
+    "typescript": "^5.7.2"
   }
 }

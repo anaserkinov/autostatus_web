@@ -23,9 +23,7 @@
   },
     "include": [
       "src",
-      "animated_sticker",
-      "webpack.config.ts",
-      "babel.config.js",
+      "babel.config.js", "index.tsx",
     ]
   }
   
