@@ -80,7 +80,7 @@ module.exports = {
             publicPath: '/',
         },
         {
-            directory: path.join(__dirname, 'src/rlottie'),
+            directory: path.join(__dirname, 'animated_sticker/src/rlottie'),
             publicPath: '/',
         }],
         historyApiFallback: true,
