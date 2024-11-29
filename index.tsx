@@ -8,15 +8,10 @@ if (typeof process === 'undefined' || !process.env) {
 import React from './src/teact/teact';
 import TeactDOM from './src/teact/teact-dom';
 import { memo, useRef, useState } from './src/teact/teact';
-import type { ApiSticker } from './src/api/types';
 
 import {
   DEBUG, STRICTERDOM_ENABLED,
 } from './src/config';
-import { enableStrict, requestMutation } from './src/fasterdom/fasterdom';
-import { betterView } from './src/util/betterView';
-import updateWebmanifest from './src/util/updateWebmanifest';
-import AnimatedSticker from './src/AnimatedSticker';
 import StickerView from './src/StickerView';
 
 if (STRICTERDOM_ENABLED) {
