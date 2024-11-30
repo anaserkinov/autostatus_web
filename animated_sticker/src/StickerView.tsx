@@ -88,7 +88,7 @@ const StickerView: FC<OwnProps> = ({
   const shouldLoadPreview = !customColor && (shouldForcePreview);
   const withPreview = shouldLoadPreview;
 
-  const fullMediaData = useMedia(fullMediaHash || `sticker${id}`, !shouldLoad);
+  const fullMediaData = useMedia(fullMediaHash || sticker.filePath, !shouldLoad);
   const shouldRenderFullMedia = fullMediaData;
   const [isPlayerReady, markPlayerReady] = useFlag();
   const isFullMediaReady = shouldRenderFullMedia && (isStatic || isPlayerReady);

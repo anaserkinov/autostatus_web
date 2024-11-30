@@ -22,6 +22,7 @@ interface StickerSet {
     customEmojiId: string;
     filePath: string;
     thumbnailPath: string;
+    isLottie?: boolean
   }>;
 }
 
@@ -76,9 +77,29 @@ const AutoStatusApp = memo(() => {
       .then(data => {
         console.log('Received data:', data);
         if (Array.isArray(data)) {
-          setStickerSets(data);
+          // Process each sticker set
+          const processedData = data.map(set => ({
+            ...set,
+            stickers: set.stickers.map(sticker => ({
+              ...sticker,
+              isLottie: sticker.filePath.includes('.tgs'),
+              filePath: `${baseUrl}/download/${sticker.filePath}`,
+              thumbnailPath: `${baseUrl}/download/${sticker.thumbnailPath}`
+            }))
+          }));
+          setStickerSets(processedData);
         } else if (data.result && Array.isArray(data.result)) {
-          setStickerSets(data.result);
+          // Process data.result if that's where the array is
+          const processedData = data.result.map(set => ({
+            ...set,
+            stickers: set.stickers.map(sticker => ({
+              ...sticker,
+              isLottie: sticker.filePath.includes('.tgs'),
+              filePath: `${baseUrl}/download/${sticker.filePath}`,
+              thumbnailPath: `${baseUrl}/download/${sticker.thumbnailPath}`
+            }))
+          }));
+          setStickerSets(processedData);
         } else {
           console.error('Unexpected data format:', data);
           setStickerSets([]);
@@ -94,36 +115,51 @@ const AutoStatusApp = memo(() => {
       return null;
     }
 
-    <StickerSet
-    stickerSet={
-      {
+    return <StickerSet
+      stickerSet={{
         id: "345354",
         accessHash: "dfdf",
         title: "Set Title Here",
-        count: stickerSets.length,
-        stickers: stickerSets
-      }
-    }
-    loadAndPlay = {true}
-    index={1}
-    idPrefix='12121'
-    isNearActive = {true}
+        count: stickerSets[0].stickers.length,
+        stickers: stickerSets[0].stickers,
+        isEmoji: true,
+        installedDate: Date.now(),
+        isArchived: false,
+        hasThumbnail: false,
+        hasStaticThumb: false,
+        hasAnimatedThumb: false,
+        hasVideoThumb: false,
+        thumbCustomEmojiId: undefined,
+        shortName: "autostatus_stickers",
+        isDefaultStatuses: false,
+        isDefaultTopicIcons: false,
+        isDefaultReactions: false,
+        areReactionsUnread: false,
+        covers: [],
+        packs: [],
+        stickerType: 2,
+        isAllowed: true
+      }}
+      loadAndPlay={true}
+      index={1}
+      idPrefix='12121'
+      isNearActive={true}
     />
 
-    return stickerSets.map(set => (
-      <div key={set.name} style={{ width: '100%' }}>
-        <div className="sticker-pack-title">{set.title}</div>
-        <div className="sticker-grid">
-          {set.stickers.map(sticker => (
-            <StickerItem 
-              key={sticker.customEmojiId}
-              sticker={sticker}
-              baseUrl={baseUrl}
-            />
-          ))}
-        </div>
-      </div>
-    ));
+    // return stickerSets.map(set => (
+    //   <div key={set.name} style={{ width: '100%' }}>
+    //     <div className="sticker-pack-title">{set.title}</div>
+    //     <div className="sticker-grid">
+    //       {set.stickers.map(sticker => (
+    //         <StickerItem 
+    //           key={sticker.customEmojiId}
+    //           sticker={sticker}
+    //           baseUrl={baseUrl}
+    //         />
+    //       ))}
+    //     </div>
+    //   </div>
+    // ));
   };
 
   return (

@@ -265,8 +265,7 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
       onClick={handleClick}
       // onContextMenu={handleContextMenu}
     >
-      {(
-        <StickerView
+      <StickerView
           containerRef={ref}
           sticker={sticker}
           isSmall
@@ -282,8 +281,7 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
           customColor={customColor}
           forceAlways={forcePlayback}
         />
-      )}
-      {!noShowPremium && isLocked && (
+      {/* {!noShowPremium && isLocked && (
         <div
           className="sticker-locked"
         >
@@ -305,7 +303,7 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
         >
           <Icon name="close" />
         </Button>
-      )}
+      )} */}
       {/* {Boolean(contextMenuItems.length) && (
         <Menu
           ref={menuRef}
