@@ -1,4 +1,3 @@
-import type { WebPageMediaSize } from '../../global/types';
 import type { ThreadId } from '../../types';
 import type { ApiWebDocument } from './bots';
 import type { ApiGroupCall, PhoneCallAction } from './calls';
@@ -510,26 +509,6 @@ export interface ApiAction {
   message?: ApiFormattedText;
 }
 
-export interface ApiWebPage {
-  mediaType: 'webpage';
-  id: number;
-  url: string;
-  displayUrl: string;
-  type?: string;
-  siteName?: string;
-  title?: string;
-  description?: string;
-  photo?: ApiPhoto;
-  audio?: ApiAudio;
-  duration?: number;
-  document?: ApiDocument;
-  video?: ApiVideo;
-  story?: ApiWebPageStoryData;
-  stickers?: ApiWebPageStickerData;
-  mediaSize?: WebPageMediaSize;
-  hasLargeMedia?: boolean;
-}
-
 export type ApiReplyInfo = ApiMessageReplyInfo | ApiStoryReplyInfo;
 
 export interface ApiMessageReplyInfo {
@@ -674,7 +653,6 @@ export type MediaContent = {
   contact?: ApiContact;
   pollId?: string;
   action?: ApiAction;
-  webPage?: ApiWebPage;
   audio?: ApiAudio;
   voice?: ApiVoice;
   invoice?: ApiMediaInvoice;

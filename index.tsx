@@ -1,4 +1,5 @@
 import './animated_sticker/src/util/handleError';
+import './index.scss'
 
 // Ensure process.env exists
 if (typeof process === 'undefined' || !process.env) {
@@ -7,101 +8,138 @@ if (typeof process === 'undefined' || !process.env) {
 
 import React from './animated_sticker/src/teact/teact';
 import TeactDOM from './animated_sticker/src/teact/teact-dom';
-import { memo, useRef, useState } from './animated_sticker/src/teact/teact';
-
-import { DEBUG } from './animated_sticker/src/config';
+import { memo, useRef, useState, useEffect } from './animated_sticker/src/teact/teact';
 import StickerView from './animated_sticker/src/StickerView';
+import StickerSet from './animated_sticker/src/StickerSet';
 
 // Set compatibility test to true
 (window as any).isCompatTestPassed = true;
 
-const App = memo(() => {
-  const containerRef = useRef<HTMLDivElement>(null);
+interface StickerSet {
+  name: string;
+  title: string;
+  stickers: Array<{
+    customEmojiId: string;
+    filePath: string;
+    thumbnailPath: string;
+  }>;
+}
 
+const StickerItem = memo(({ sticker, baseUrl }: { sticker: StickerSet['stickers'][0], baseUrl: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  
   return (
-    <div>
-      <div 
-            ref={containerRef}
-            style={{
-              width: '48px',
-              height: '48px',
-              position: 'relative'
-            }}
-            >
+    <div
+      className="sticker-cell"
+      ref={ref}
+      style={{
+        transform: 'translateZ(0)', // Hardware acceleration
+      }}
+    >
       <StickerView
-        containerRef={containerRef}
+        containerRef={ref}
         size={48}
-        // Using proxy for both thumbnail and sticker
-        fullMediaHash='https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs'
         noPlay={false}
-        fullMediaClassName="full-media"
-        shouldLoop = {true}
+        shouldLoop={true}
+        fps={60} // Reduce FPS for better performance
+        quality="medium"
+        fullMediaHash={`${baseUrl}/download/${sticker.filePath}`}
         sticker={{
-          id: '453454',
-          mediaType: "sticker",
-          width: 48,
-          height: 48,
-          stickerSetInfo: {
-            shortName: ''
-          },
-          isLottie: true,
-          isVideo: false,
-          isCustomEmoji: true,
-          isFree: true,
-          thumbnail: {
-            width: 128,
-            height: 128,
-            dataUri: "https://autostatus.nashruz.uz/app/download/thumbnails/5366316836101038579.webp"
-          }
+          ...sticker,
+          isLottie: sticker.filePath.includes('.tgs'),
+          thumbnailPath: `${baseUrl}/download/${sticker.thumbnailPath}`
         }}
       />
-      </div>
-
-      {/* <div style={{display:'flex'}}>
-        {[1,2,3,4,5,6,7,8,9,10].map(elem =>
-          <div key={elem} style={{display:'flex',flexDirection:'column'}}>
-            {[1,2,3,4,5,6,7,8,9,10].map(innerElem =>
-              <AnimatedSticker 
-                key={`${elem}-${innerElem}`}
-                renderId={String(innerElem)}
-                size={48}
-                tgsUrl='https://autostatus.nashruz.uz/app/download/stickers/5366316836101038579.tgs'
-                onLoad={() => console.log('Sticker loaded!')}
-                play={true}
-              />
-            )}
-          </div>
-        )}
-      </div> */}
     </div>
   );
 });
 
-init();
+const AutoStatusApp = memo(() => {
+  const [stickerSets, setStickerSets] = useState<StickerSet[]>([]);
+  const userImageRef = useRef<HTMLDivElement>(null);
 
-async function init() {
-  if (DEBUG) {
-    // eslint-disable-next-line no-console
-    console.log('>>> INIT');
-  }
+  useEffect(() => {
+    // Signal that the app is ready
+    window.Telegram.WebApp.ready();
 
-  console.log('Compatibility test:', (window as any).isCompatTestPassed);
-  console.log('Process env:', process.env);
-  
-  if (!(window as any).isCompatTestPassed) {
-    console.error('Compatibility test failed');
-    return;
-  }
+    // Get initData from Telegram WebApp
+    const initData = window.Telegram.WebApp.initData || '';
 
-  console.log('Attempting to render App...');
+    // Fetch sticker sets
+    console.log("fetching sticker sets");
+    fetch('https://autostatus.nashruz.uz/app/stickers', {
+      headers: {
+        'initData': `${initData}`
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Received data:', data);
+        if (Array.isArray(data)) {
+          setStickerSets(data);
+        } else if (data.result && Array.isArray(data.result)) {
+          setStickerSets(data.result);
+        } else {
+          console.error('Unexpected data format:', data);
+          setStickerSets([]);
+        }
+      })
+      .catch(error => console.error('Error fetching sticker sets:', error));
+  }, []);
 
-  const rootElement = document.getElementById('root');
-  console.log('Root element:', rootElement);
+  const baseUrl = 'https://autostatus.nashruz.uz/app';
 
-  TeactDOM.render(
-    <App />,
-    rootElement!,
+  const renderStickers = () => {
+    if (!Array.isArray(stickerSets) || stickerSets.length === 0) {
+      return null;
+    }
+
+    <StickerSet
+    stickerSet={
+      {
+        id: "345354",
+        accessHash: "dfdf",
+        title: "Set Title Here",
+        count: stickerSets.length,
+        stickers: stickerSets
+      }
+    }
+    loadAndPlay = {true}
+    index={1}
+    idPrefix='12121'
+    isNearActive = {true}
+    />
+
+    return stickerSets.map(set => (
+      <div key={set.name} style={{ width: '100%' }}>
+        <div className="sticker-pack-title">{set.title}</div>
+        <div className="sticker-grid">
+          {set.stickers.map(sticker => (
+            <StickerItem 
+              key={sticker.customEmojiId}
+              sticker={sticker}
+              baseUrl={baseUrl}
+            />
+          ))}
+        </div>
+      </div>
+    ));
+  };
+
+  return (
+    <div className="container" style={{ width: '100%' }}>
+      <div className="user-image" ref={userImageRef} style={{
+        backgroundImage: `url(${baseUrl}/download/thumbnails/image.jpg)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        width: '150px', height: '150px', borderRadius: '50%', margin: '0 auto'
+      }}></div>
+      <input type="range" min="10" max="1440" step="10" className="slider" />
+      <div className="sticker-pack" style={{ width: '100%' }}>
+        {renderStickers()}
+      </div>
+    </div>
   );
+});
 
-  console.log('Render attempt completed');
-}
+TeactDOM.render(<AutoStatusApp />, document.getElementById('root'));

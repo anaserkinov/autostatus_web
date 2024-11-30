@@ -1,0 +1,58 @@
+body {
+    padding: 50px;
+    margin: 0;
+    background-color: var(--tg-theme-bg-color);
+    color: var(--tg-theme-text-color);
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    max-width: 580px; // 10 cells * 48px + 9 gaps * 10px
+    margin: 0 auto;
+}
+
+.user-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.emoji-list {
+    width: 100%;
+}
+
+.emoji-list-title,
+.sticker-pack-title {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.sticker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: 8px;
+    width: 100%;
+    contain: content; /* Improve performance by isolating content */
+    background-color: rgba(0, 0, 0, 0.05); /* Debug helper */
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.sticker-cell {
+    width: 48px;
+    height: 48px;
+    position: relative;
+    contain: strict; /* Strict containment for better performance */
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+    -webkit-font-smoothing: antialiased;
+
+}
