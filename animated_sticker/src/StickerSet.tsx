@@ -243,11 +243,12 @@ const StickerSet: FC<OwnProps> = ({
   const favoriteStickerIdsSet = useMemo(() => (
     favoriteStickers ? new Set(favoriteStickers.map(({ id }) => id)) : undefined
   ), [favoriteStickers]);
-  const withAddSetButton = !shouldHideHeader && !isRecent && isEmoji && !isPopular && !isChatEmojiSet
-    && (!isInstalled || (!isCurrentUserPremium && !isSavedMessages));
-  const addSetButtonText = useMemo(() => {
-    return "Add";
-  }, [isLocked, isInstalled]);
+  // const withAddSetButton = !shouldHideHeader && !isRecent && isEmoji && !isPopular && !isChatEmojiSet
+  //   && (!isInstalled || (!isCurrentUserPremium && !isSavedMessages));
+  const withAddSetButton = false
+  // const addSetButtonText = useMemo(() => {
+  //   return "Add";
+  // }, [isLocked, isInstalled]);
 
   return (
     <div
@@ -261,21 +262,21 @@ const StickerSet: FC<OwnProps> = ({
       {!shouldHideHeader && (
         <div className="symbol-set-header">
           <p className={buildClassName('symbol-set-title', withAddSetButton && 'symbol-set-title-external')}>
-            {isLocked && <Icon name="lock-badge" className="symbol-set-locked-icon" />}
+            {/* {isLocked && <Icon name="lock-badge" className="symbol-set-locked-icon" />} */}
             <span className="symbol-set-name">{stickerSet.title}</span>
-            {(isChatEmojiSet || isChatStickerSet) && (
+            {/* {(isChatEmojiSet || isChatStickerSet) && (
               <span className="symbol-set-chat">{"GroupStickers"}</span>
-            )}
-            {withAddSetButton && Boolean(stickerSet.stickers) && (
+            )} */}
+            {/* {withAddSetButton && Boolean(stickerSet.stickers) && (
               <span className="symbol-set-amount">
                 {"EmojiCount"}
               </span>
-            )}
+            )} */}
           </p>
-          {isRecent && (
+          {/* {isRecent && (
             <Icon className="symbol-set-remove" name="close" onClick={openConfirmModal} />
-          )}
-          {withAddSetButton && (
+          )} */}
+          {/* {withAddSetButton && (
             <Button
               className="symbol-set-add-button"
               withPremiumGradient={isPremiumSet && !isCurrentUserPremium}
@@ -286,7 +287,7 @@ const StickerSet: FC<OwnProps> = ({
             >
               {addSetButtonText}
             </Button>
-          )}
+          )} */}
         </div>
       )}
       <div

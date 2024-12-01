@@ -134,7 +134,7 @@ const AutoStatusApp = memo(() => {
         stickerSet={{
           id: "345354",
           accessHash: "dfdf",
-          title: "Set Title Here",
+          title: stickerSets[0].title,
           count: stickerSets[0].stickers.length,
           stickers: stickerSets[0].stickers,
           isEmoji: true,
@@ -155,6 +155,7 @@ const AutoStatusApp = memo(() => {
           stickerType: 2,
           isAllowed: true
         }}
+        isCurrentUserPremium = {true}
         loadAndPlay={true}
         index={1}
         idPrefix='12121'

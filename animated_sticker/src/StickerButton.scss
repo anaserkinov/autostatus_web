@@ -76,7 +76,7 @@
   }
 
   &.selected {
-    background-color: var(--color-interactive-element-hover);
+    background-color: color-mix(in srgb, var(--tg-theme-button-color) 70%, transparent);
   }
 
   &.interactive {
