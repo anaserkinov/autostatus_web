@@ -9,6 +9,7 @@ import {
 
 import {
   DEBUG, ELECTRON_HOST_URL,
+  MEDIA_CACHE_MAX_BYTES,
   IS_PACKAGED_ELECTRON, MEDIA_CACHE_DISABLED, MEDIA_CACHE_NAME, MEDIA_CACHE_NAME_AVATARS,
 } from '../config';
 import * as cacheApi from './cacheApi';
@@ -146,6 +147,15 @@ export async function fetchFromCacheOrRemote(
     // eslint-disable-next-line no-console
     if (DEBUG) console.debug(`Retrying to fetch media ${url}`);
     return fetchFromCacheOrRemote(url, mediaFormat, isHtmlAllowed, retryNumber + 1);
+  }
+
+  const canCache = mediaFormat !== ApiMediaFormat.Progressive && (
+    mediaFormat !== ApiMediaFormat.BlobUrl || (remote.dataBlob as Blob).size <= MEDIA_CACHE_MAX_BYTES
+  );
+
+  if (!MEDIA_CACHE_DISABLED && cacheApi && canCache) {
+    const cacheName = url.startsWith('avatar') ? MEDIA_CACHE_NAME_AVATARS : MEDIA_CACHE_NAME;
+    void cacheApi.save(cacheName, url, remote.dataBlob);
   }
 
   const prepared = prepareMedia(remote.dataBlob);

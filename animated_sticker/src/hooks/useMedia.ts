@@ -1,4 +1,4 @@
-import { useEffect } from '../teact/teact';
+import { useEffect, useRef } from '../teact/teact';
 
 import { ApiMediaFormat } from '../api/types';
 

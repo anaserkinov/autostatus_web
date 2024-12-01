@@ -8,11 +8,10 @@ import useMediaTransition from './hooks/useMediaTransition';
 import useThumbnail from './hooks/useThumbnail';
 import useCoordsInSharedCanvas from './hooks/useCoordsInSharedCanvas';
 import useMedia from './hooks/useMedia';
-import * as mediaLoader from './util/mediaLoader';
 import useColorFilter from './hooks/stickers/useColorFilter';
 import useFlag from './hooks/useFlag';
 import useDevicePixelRatio from './hooks/window/useDevicePixelRatio';
-import { getStickerMediaHash } from './global/helpers/messageMedia';
+import { ApiMediaFormat } from './api/types';
 
 import AnimatedSticker from './AnimatedSticker';
 
@@ -93,7 +92,12 @@ const StickerView: FC<OwnProps> = ({
   const [isPlayerReady, markPlayerReady] = useFlag();
   const isFullMediaReady = shouldRenderFullMedia && (isStatic || isPlayerReady);
 
-  const thumbData = thumbDataUri;
+  const thumbData = useMedia(
+    thumbDataUri,
+    false,
+    ApiMediaFormat.BlobUrl
+  );
+  // const thumbData = thumbDataUri;
   const isThumbOpaque = sharedCanvasRef && !withTranslucentThumb;
 
   const noCrossTransition = Boolean(isLottie && withPreview);
