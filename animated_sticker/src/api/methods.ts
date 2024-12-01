@@ -58,7 +58,7 @@ export async function callApi(
 
       // Convert to blob
       const blob = new Blob([chunksAll], { 
-        type: 'image/webp'
+        type: response.headers.get('Content-Type')?.toString()
       });
 
       return { dataBlob: blob };

@@ -125,7 +125,7 @@ const StickerSet: FC<OwnProps> = ({
 
   const [itemsPerRow, setItemsPerRow] = useState(getItemsPerRowFallback(windowWidth));
 
-  const transitionClassNames = useMediaTransitionDeprecated(false);
+  const transitionClassNames = useMediaTransitionDeprecated(stickerSet);
 
   // `isNearActive` is set in advance during animation, but it is not reliable for short sets
   const shouldRender = isNearActive;
@@ -368,7 +368,7 @@ const StickerSet: FC<OwnProps> = ({
                 withTranslucentThumb={isTranslucent}
                 onClick={onStickerSelect}
                 clickArg={sticker}
-                isSelected={isSelected}
+                isSelected={true}
                 onUnfaveClick={isFavorite && favoriteStickerIdsSet?.has(sticker.id) ? onStickerUnfave : undefined}
                 onFaveClick={!favoriteStickerIdsSet?.has(sticker.id) ? onStickerFave : undefined}
                 onRemoveRecentClick={isRecent ? onStickerRemoveRecent : undefined}

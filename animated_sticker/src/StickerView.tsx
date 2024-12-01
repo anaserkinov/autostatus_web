@@ -16,7 +16,7 @@ import { getStickerMediaHash } from './global/helpers/messageMedia';
 
 import AnimatedSticker from './AnimatedSticker';
 
-import './StickerView.module.scss';
+import styles from './StickerView.moule.scss';
 
 type OwnProps = {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -115,11 +115,11 @@ const StickerView: FC<OwnProps> = ({
     dpr,
   ].filter(Boolean).join('_')), [customColor, dpr, id, randomIdPrefix, size, withSharedAnimation]);
 
+  console.log(thumbClassName)
+
   return (
     <>
-      {
-        thumbData && !isFullMediaReady && (
-          <img
+      <img
             ref={thumbRef}
             src={thumbData}
             className={buildClassName(
@@ -133,8 +133,6 @@ const StickerView: FC<OwnProps> = ({
             alt=""
             draggable={false}
           />
-        )
-      }
       {shouldRenderFullMedia && (isLottie ? (
         <AnimatedSticker
           ref={fullMediaRef as React.RefObject<HTMLDivElement>}
