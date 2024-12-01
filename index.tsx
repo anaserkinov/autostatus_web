@@ -33,7 +33,7 @@ interface StickerSet {
 
 const StickerItem = memo(({ sticker, baseUrl }: { sticker: StickerSet['stickers'][0], baseUrl: string }) => {
   const ref = useRef<HTMLDivElement>(null);
-  
+
   return (
     <div
       className="sticker-cell"
@@ -81,7 +81,6 @@ const AutoStatusApp = memo(() => {
     })
       .then(response => response.json())
       .then(data => {
-        console.log('Received data:', data);
         if (Array.isArray(data)) {
           const processedData = data.map(set => ({
             ...set,
@@ -132,37 +131,43 @@ const AutoStatusApp = memo(() => {
     }
 
     return (
-      <StickerSet
-        stickerSet={{
-          id: "345354",
-          accessHash: "dfdf",
-          title: stickerSets[0].title,
-          count: stickerSets[0].stickers.length,
-          stickers: stickerSets[0].stickers,
-          isEmoji: true,
-          installedDate: Date.now(),
-          isArchived: false,
-          hasThumbnail: false,
-          hasStaticThumb: false,
-          hasAnimatedThumb: false,
-          hasVideoThumb: false,
-          thumbCustomEmojiId: undefined,
-          shortName: "autostatus_stickers",
-          isDefaultStatuses: false,
-          isDefaultTopicIcons: false,
-          isDefaultReactions: false,
-          areReactionsUnread: false,
-          covers: [],
-          packs: [],
-          stickerType: 2,
-          isAllowed: true
-        }}
-        isCurrentUserPremium = {true}
-        loadAndPlay={true}
-        index={1}
-        idPrefix='12121'
-        isNearActive={true}
-      />
+      <div>
+        {
+          stickerSets.map((set, index) => (
+            <StickerSet
+              stickerSet={{
+                id: set.name,
+                accessHash: set.name,
+                title: set.title,
+                count: set.stickers.length,
+                stickers: set.stickers,
+                isEmoji: true,
+                installedDate: Date.now(),
+                isArchived: false,
+                hasThumbnail: false,
+                hasStaticThumb: false,
+                hasAnimatedThumb: false,
+                hasVideoThumb: false,
+                thumbCustomEmojiId: undefined,
+                shortName: "autostatus_stickers",
+                isDefaultStatuses: false,
+                isDefaultTopicIcons: false,
+                isDefaultReactions: false,
+                areReactionsUnread: false,
+                covers: [],
+                packs: [],
+                stickerType: 2,
+                isAllowed: true
+              }}
+              isCurrentUserPremium={true}
+              loadAndPlay={true}
+              index={1}
+              idPrefix='12121'
+              isNearActive={true}
+            />
+          ))
+        }
+      </div>
     );
   };
 
@@ -180,9 +185,9 @@ const AutoStatusApp = memo(() => {
           backgroundImage: `url(${baseUrl}/download/thumbnails/image.jpg)`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          width: '150px', 
-          height: '150px', 
-          borderRadius: '50%', 
+          width: '150px',
+          height: '150px',
+          borderRadius: '50%',
           margin: '0 auto',
           position: 'relative',
           overflow: 'visible'
@@ -216,11 +221,11 @@ const AutoStatusApp = memo(() => {
           <span className="duration-label">Duration</span>
           <span className="duration-value">{Math.floor(duration / 60)} hours</span>
         </div>
-        <input 
-          type="range" 
-          min="10" 
-          max="1440" 
-          step="10" 
+        <input
+          type="range"
+          min="10"
+          max="1440"
+          step="10"
           className="slider"
           value={duration}
           onChange={(e) => {

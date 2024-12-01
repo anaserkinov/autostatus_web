@@ -115,8 +115,6 @@ const StickerView: FC<OwnProps> = ({
     dpr,
   ].filter(Boolean).join('_')), [customColor, dpr, id, randomIdPrefix, size, withSharedAnimation]);
 
-  console.log(thumbClassName)
-
   return (
     <>
       <img
