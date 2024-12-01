@@ -31,6 +31,8 @@ import Icon from './Icon';
 // import ReactionEmoji from './reactions/ReactionEmoji';
 import StickerButton from './StickerButton';
 
+import './StickerSet.scss';
+
 // import grey from '../../assets/icons/forumTopic/grey.svg';
 
 type OwnProps = {
