@@ -2,20 +2,27 @@ import type { FC } from './teact/teact';
 import React, { memo, useMemo, useRef } from './teact/teact';
 
 import type { ApiSticker } from './api/types';
+import type { ObserveFn } from './hooks/useIntersectionObserver';
+
 import buildClassName from './util/buildClassName';
-import useUniqueId from './hooks/useUniqueId';
-import useMediaTransition from './hooks/useMediaTransition';
-import useThumbnail from './hooks/useThumbnail';
-import useCoordsInSharedCanvas from './hooks/useCoordsInSharedCanvas';
-import useMedia from './hooks/useMedia';
+import * as mediaLoader from './util/mediaLoader';
+import { IS_ANDROID, IS_IOS, IS_WEBM_SUPPORTED } from './util/windowEnvironment';
+
 import useColorFilter from './hooks/stickers/useColorFilter';
+import useCoordsInSharedCanvas from './hooks/useCoordsInSharedCanvas';
 import useFlag from './hooks/useFlag';
+import { useIsIntersecting } from './hooks/useIntersectionObserver';
+import useMedia from './hooks/useMedia';
+import useMediaTransition from './hooks/useMediaTransition';
+import useMountAfterHeavyAnimation from './hooks/useMountAfterHeavyAnimation';
+import useThumbnail from './hooks/useThumbnail';
+import useUniqueId from './hooks/useUniqueId';
 import useDevicePixelRatio from './hooks/window/useDevicePixelRatio';
 import { ApiMediaFormat } from './api/types';
 
 import AnimatedSticker from './AnimatedSticker';
 
-import styles from './StickerView.moule.scss';
+import './StickerView.module.scss';
 
 type OwnProps = {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -31,6 +38,8 @@ type OwnProps = {
   shouldPreloadPreview?: boolean;
   forceAlways?: boolean;
   forceOnHeavyAnimation?: boolean;
+  observeIntersectionForLoading?: ObserveFn;
+  observeIntersectionForPlaying?: ObserveFn;
   noLoad?: boolean;
   noPlay?: boolean;
   noVideoOnMobile?: boolean;
@@ -58,6 +67,8 @@ const StickerView: FC<OwnProps> = ({
   shouldPreloadPreview,
   forceAlways,
   forceOnHeavyAnimation,
+  observeIntersectionForLoading,
+  observeIntersectionForPlaying,
   noLoad,
   noPlay,
   noVideoOnMobile,
@@ -70,34 +81,56 @@ const StickerView: FC<OwnProps> = ({
   const {
     id, isLottie, stickerSetInfo, emoji,
   } = sticker;
-
+  const [isVideoBroken, markVideoBroken] = useFlag();
+  const isUnsupportedVideo = sticker.isVideo && (
+    !IS_WEBM_SUPPORTED
+    || (noVideoOnMobile && (IS_IOS || IS_ANDROID))
+  );
   const isVideo = sticker.isVideo;
   const isStatic = !isLottie && !isVideo;
+  // const previewMediaHash = getStickerMediaHash(sticker, 'preview');
+  const previewMediaHash = sticker.thumbnail?.dataUri ?? '';
 
   const dpr = useDevicePixelRatio();
 
   const filterStyle = useColorFilter(customColor);
 
-  const shouldPlay = !noPlay;
-  const shouldLoad = !noLoad;
+  const isIntersectingForLoading = useIsIntersecting(containerRef, observeIntersectionForLoading);
+  const shouldLoad = isIntersectingForLoading && !noLoad;
+  const isIntersectingForPlaying = (
+    useIsIntersecting(containerRef, observeIntersectionForPlaying)
+    && isIntersectingForLoading
+  );
+  const shouldPlay = isIntersectingForPlaying && !noPlay;
+  const hasIntersectedForPlayingRef = useRef(isIntersectingForPlaying);
+  if (!hasIntersectedForPlayingRef.current && isIntersectingForPlaying) {
+    hasIntersectedForPlayingRef.current = true;
+  }
 
-  const thumbDataUri = useThumbnail(sticker);
+  const cachedPreview = mediaLoader.getFromMemory(previewMediaHash);
+  const isReadyToMountFullMedia = useMountAfterHeavyAnimation(hasIntersectedForPlayingRef.current);
+  const shouldForcePreview = isUnsupportedVideo || (isStatic ? isSmall : noPlay);
+  const shouldLoadPreview = !customColor && !cachedPreview && (!isReadyToMountFullMedia || shouldForcePreview);
+  // const previewMediaData = useMedia(previewMediaHash, !shouldLoadPreview);
+  const previewMediaData = undefined
+  const withPreview = shouldLoadPreview || cachedPreview;
 
-  const shouldForcePreview = (isStatic ? isSmall : noPlay);
-  const shouldLoadPreview = !customColor && (shouldForcePreview);
-  const withPreview = shouldLoadPreview;
-
-  const fullMediaData = useMedia(fullMediaHash || sticker.filePath, !shouldLoad);
-  const shouldRenderFullMedia = fullMediaData;
+  const shouldSkipFullMedia = Boolean(shouldForcePreview || (
+    fullMediaHash === previewMediaHash && (cachedPreview || previewMediaData)
+  ));
+  const fullMediaData = useMedia(fullMediaHash || sticker.filePath, !shouldLoad || shouldSkipFullMedia);
+  const shouldRenderFullMedia = isReadyToMountFullMedia && !shouldSkipFullMedia && fullMediaData && !isVideoBroken;
   const [isPlayerReady, markPlayerReady] = useFlag();
   const isFullMediaReady = shouldRenderFullMedia && (isStatic || isPlayerReady);
 
-  const thumbData = useMedia(
+  const thumbDataUri = useThumbnail(sticker);
+
+  // const thumbData = cachedPreview || previewMediaData || thumbDataUri;
+  const thumbData = cachedPreview || previewMediaData || useMedia(
     thumbDataUri,
     false,
     ApiMediaFormat.BlobUrl
   );
-  // const thumbData = thumbDataUri;
   const isThumbOpaque = sharedCanvasRef && !withTranslucentThumb;
 
   const noCrossTransition = Boolean(isLottie && withPreview);
@@ -122,19 +155,19 @@ const StickerView: FC<OwnProps> = ({
   return (
     <>
       <img
-            ref={thumbRef}
-            src={thumbData}
-            className={buildClassName(
-              'thumb',
-              noCrossTransition && 'no-transition',
-              isThumbOpaque && 'thumb-opaque',
-              thumbClassName,
-              'sticker-media',
-            )}
-            style={filterStyle}
-            alt=""
-            draggable={false}
-          />
+        ref={thumbRef}
+        src={thumbData}
+        className={buildClassName(
+          'thumb',
+          noCrossTransition && 'no-transition',
+          isThumbOpaque && 'thumb-opaque',
+          thumbClassName,
+          'sticker-media',
+        )}
+        style={filterStyle}
+        alt=""
+        draggable={false}
+      />
       {shouldRenderFullMedia && (isLottie ? (
         <AnimatedSticker
           ref={fullMediaRef as React.RefObject<HTMLDivElement>}

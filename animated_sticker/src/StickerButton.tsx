@@ -2,20 +2,24 @@ import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import React, {
   memo, useEffect, useMemo, useRef,
 } from './teact/teact';
-// import { getActions } from './global';
+import { getActions } from './global';
 
 import type { ApiSticker } from './api/types';
+import type { ObserveFn } from './hooks/useIntersectionObserver';
 
 import buildClassName from './util/buildClassName';
 import { getServerTimeOffset } from './util/serverTime';
 import { IS_TOUCH_ENV } from './util/windowEnvironment';
 
 import useDynamicColorListener from './hooks/stickers/useDynamicColorListener';
-// import useContextMenuHandlers from './hooks/useContextMenuHandlers';
+import useContextMenuHandlers from './hooks/useContextMenuHandlers';
+import { useIsIntersecting } from './hooks/useIntersectionObserver';
 import useLastCallback from './hooks/useLastCallback';
 
-import Button from './Button';
-import Icon from './Icon';
+// import Button from './Button';
+// import Menu from '../ui/Menu';
+// import MenuItem from '../ui/MenuItem';
+// import Icon from './Icon';
 import StickerView from './StickerView';
 
 import './StickerButton.scss';
@@ -36,6 +40,8 @@ type OwnProps<T> = {
   sharedCanvasRef?: React.RefObject<HTMLCanvasElement>;
   withTranslucentThumb?: boolean;
   forcePlayback?: boolean;
+  observeIntersection: ObserveFn;
+  observeIntersectionForShowing?: ObserveFn;
   noShowPremium?: boolean;
   onClick?: (arg: OwnProps<T>['clickArg'], isSilent?: boolean, shouldSchedule?: boolean) => void;
   clickArg: T;
@@ -66,6 +72,8 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
   isSavedMessages,
   isStatusPicker,
   canViewSet,
+  observeIntersection,
+  observeIntersectionForShowing,
   isSelected,
   isCurrentUserPremium,
   shouldIgnorePremium,
@@ -83,7 +91,7 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
   onContextMenuClick,
   isEffectEmoji,
 }: OwnProps<T>) => {
-  // const { openStickerSet, openPremiumModal, setEmojiStatus } = getActions();
+  const { openStickerSet, openPremiumModal, setEmojiStatus } = getActions();
   // eslint-disable-next-line no-null/no-null
   const ref = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line no-null/no-null
@@ -95,19 +103,23 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
     id, stickerSetInfo,
   } = sticker;
 
+  // const isPremium = (!sticker.isFree && isEffectEmoji) || sticker.hasEffect;
   const isPremium = true;
   const isCustomEmoji = sticker.isCustomEmoji || isEffectEmoji;
   const isLocked = !isCurrentUserPremium && isPremium && !shouldIgnorePremium;
 
-  const shouldLoad = true;
-  const shouldPlay = !noPlay;
+  const isIntersecting = useIsIntersecting(ref, observeIntersection);
+  const shouldLoad = isIntersecting;
+  const shouldPlay = isIntersecting && !noPlay;
 
-  // const {
-  //   isContextMenuOpen, contextMenuAnchor,
-  //   handleBeforeContextMenu, handleContextMenu,
-  //   handleContextMenuClose, handleContextMenuHide,
-  // } = useContextMenuHandlers(ref);
-  // const shouldRenderContextMenu = Boolean(!noContextMenu && contextMenuAnchor);
+  const isIntesectingForShowing = useIsIntersecting(ref, observeIntersectionForShowing);
+
+  const {
+    isContextMenuOpen, contextMenuAnchor,
+    handleBeforeContextMenu, handleContextMenu,
+    handleContextMenuClose, handleContextMenuHide,
+  } = useContextMenuHandlers(ref);
+  const shouldRenderContextMenu = Boolean(!noContextMenu && contextMenuAnchor);
 
   const getTriggerElement = useLastCallback(() => ref.current);
   const getRootElement = useLastCallback(() => ref.current!.closest('.custom-scroll, .no-scrollbar'));
@@ -116,33 +128,33 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
   });
   const getLayout = useLastCallback(() => ({ withPortal: isStatusPicker, shouldAvoidNegativePosition: true }));
 
-  // useEffect(() => {
-  //   if (isContextMenuOpen) {
-  //     onContextMenuOpen?.();
-  //   } else {
-  //     onContextMenuClose?.();
-  //   }
-  // }, [isContextMenuOpen, onContextMenuClose, onContextMenuOpen]);
+  useEffect(() => {
+    if (isContextMenuOpen) {
+      onContextMenuOpen?.();
+    } else {
+      onContextMenuClose?.();
+    }
+  }, [isContextMenuOpen, onContextMenuClose, onContextMenuOpen]);
 
-  // useEffect(() => {
-  //   if (!isIntersecting) handleContextMenuClose();
-  // }, [handleContextMenuClose]);
+  useEffect(() => {
+    if (!isIntersecting) handleContextMenuClose();
+  }, [handleContextMenuClose, isIntersecting]);
 
   const handleClick = () => {
-    // if (isContextMenuOpen) return;
-    if (isLocked) {
-      if (isEffectEmoji) {
-        // openPremiumModal({ initialSection: 'effects' });
-      } else {
-        // openPremiumModal({ initialSection: 'premium_stickers' });
-      }
-      return;
-    }
+    if (isContextMenuOpen) return;
+    // if (isLocked) {
+    //   if (isEffectEmoji) {
+    //     openPremiumModal({ initialSection: 'effects' });
+    //   } else {
+    //     openPremiumModal({ initialSection: 'premium_stickers' });
+    //   }
+    //   return;
+    // }
     onClick?.(clickArg);
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLElement>) => {
-    // handleBeforeContextMenu(e);
+    handleBeforeContextMenu(e);
   };
 
   const handleRemoveClick = useLastCallback((e: ReactMouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -173,19 +185,19 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
   });
 
   const handleOpenSet = useLastCallback(() => {
-    // openStickerSet({ stickerSetInfo });
+    openStickerSet({ stickerSetInfo });
   });
 
   const handleEmojiStatusExpiresClick = useLastCallback((e: React.SyntheticEvent, duration = 0) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // handleContextMenuClose();
+    handleContextMenuClose();
     onContextMenuClick?.();
-    // setEmojiStatus({
-    //   emojiStatus: sticker,
-    //   expires: Date.now() / 1000 + duration + getServerTimeOffset(),
-    // });
+    setEmojiStatus({
+      emojiStatus: sticker,
+      expires: Date.now() / 1000 + duration + getServerTimeOffset(),
+    });
   });
 
   const shouldShowCloseButton = !IS_TOUCH_ENV && onRemoveRecentClick;
@@ -200,9 +212,9 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
   );
 
   const contextMenuItems = useMemo(() => {
-  //   if (!shouldRenderContextMenu || noContextMenu || (isCustomEmoji && !isStatusPicker)) return [];
+    // if (!shouldRenderContextMenu || noContextMenu || (isCustomEmoji && !isStatusPicker)) return [];
 
-    const items: ReactNode[] = [];
+    // const items: ReactNode[] = [];
 
     // if (isCustomEmoji) {
     //   contentForStatusMenuContext.forEach((item) => {
@@ -219,7 +231,7 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
     // if (onUnfaveClick) {
     //   items.push(
     //     <MenuItem icon="favorite" onClick={handleContextUnfave}>
-    //       "Remove favourite"
+    //       {lang('Stickers.RemoveFromFavorites')}
     //     </MenuItem>,
     //   );
     // }
@@ -227,30 +239,39 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
     // if (onFaveClick) {
     //   items.push(
     //     <MenuItem icon="favorite" onClick={handleContextFave}>
-    //       'Favourite'
+    //       {lang('Stickers.AddToFavorites')}
     //     </MenuItem>,
     //   );
     // }
 
+    // if (!isLocked && onClick) {
+    //   if (!isSavedMessages) {
+    //     items.push(<MenuItem onClick={handleSendQuiet} icon="muted">{lang('SendWithoutSound')}</MenuItem>);
+    //   }
+    //   items.push(
+    //     <MenuItem onClick={handleSendScheduled} icon="calendar">
+    //       {lang(isSavedMessages ? 'SetReminder' : 'ScheduleMessage')}
+    //     </MenuItem>,
+    //   );
+    // }
 
     // if (canViewSet) {
     //   items.push(
     //     <MenuItem onClick={handleOpenSet} icon="stickers">
-    //      'Pack Preview'
+    //       {lang('ViewPackPreview')}
     //     </MenuItem>,
     //   );
     // }
     // if (onRemoveRecentClick) {
     //   items.push(
     //     <MenuItem icon="delete" onClick={handleContextRemoveRecent}>
-    //       "Delete from recent"
+    //       {lang('DeleteFromRecent')}
     //     </MenuItem>,
     //   );
     // }
-    return items;
+    // return items;
   }, [
-    // shouldRenderContextMenu,
-     noContextMenu, isCustomEmoji, isStatusPicker, onUnfaveClick, onFaveClick, isLocked,
+    shouldRenderContextMenu, noContextMenu, isCustomEmoji, isStatusPicker, onUnfaveClick, onFaveClick, isLocked,
     onClick, canViewSet, onRemoveRecentClick, handleEmojiStatusExpiresClick, handleContextUnfave,
     handleContextFave, isSavedMessages, handleSendScheduled, handleSendQuiet, handleOpenSet, handleContextRemoveRecent,
   ]);
@@ -263,9 +284,10 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
       data-sticker-id={id}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
-      // onContextMenu={handleContextMenu}
+      onContextMenu={handleContextMenu}
     >
-      <StickerView
+      {isIntesectingForShowing && (
+        <StickerView
           containerRef={ref}
           sticker={sticker}
           isSmall
@@ -281,6 +303,7 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
           customColor={customColor}
           forceAlways={forcePlayback}
         />
+      )}
       {/* {!noShowPremium && isLocked && (
         <div
           className="sticker-locked"
@@ -303,8 +326,8 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
         >
           <Icon name="close" />
         </Button>
-      )} */}
-      {/* {Boolean(contextMenuItems.length) && (
+      )}
+      {Boolean(contextMenuItems.length) && (
         <Menu
           ref={menuRef}
           isOpen={isContextMenuOpen}

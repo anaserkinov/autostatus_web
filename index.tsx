@@ -1,5 +1,4 @@
 import './animated_sticker/src/util/handleError';
-import './index.scss'
 import './src/styles/Slider.scss';
 
 // Ensure process.env exists
@@ -12,56 +11,20 @@ import TeactDOM from './animated_sticker/src/teact/teact-dom';
 import { memo, useRef, useState, useEffect } from './animated_sticker/src/teact/teact';
 import StickerView from './animated_sticker/src/StickerView';
 import StickerSet from './animated_sticker/src/StickerSet';
+import CustomEmojiPicker from './animated_sticker/src/CustomEmojiPicker'
+import useScrolledState from './animated_sticker/src/hooks/useScrolledState';
+import buildClassName from './animated_sticker/src/util/buildClassName';
+import {ApiSticker, ApiStickerSet} from './animated_sticker/src/api/types'
 
 import './animated_sticker/src/styles/index.scss';
+import { IS_TOUCH_ENV } from './animated_sticker/src/util/windowEnvironment';
+
 
 // Set compatibility test to true
 (window as any).isCompatTestPassed = true;
 
-interface StickerSet {
-  name: string;
-  title: string;
-  stickers: Array<{
-    customEmojiId: string;
-    filePath: string;
-    thumbnail: {
-      dataUri: string
-    };
-    isLottie?: boolean
-  }>;
-}
-
-const StickerItem = memo(({ sticker, baseUrl }: { sticker: StickerSet['stickers'][0], baseUrl: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  return (
-    <div
-      className="sticker-cell"
-      ref={ref}
-      style={{
-        transform: 'translateZ(0)', // Hardware acceleration
-      }}
-    >
-      <StickerView
-        containerRef={ref}
-        size={48}
-        noPlay={false}
-        shouldLoop={true}
-        fps={60} // Reduce FPS for better performance
-        quality="medium"
-        fullMediaHash={`${baseUrl}/download/${sticker.filePath}`}
-        sticker={{
-          ...sticker,
-          isLottie: sticker.filePath.includes('.tgs'),
-          thumbnailPath: `${baseUrl}/download/${sticker.thumbnailPath}`
-        }}
-      />
-    </div>
-  );
-});
-
 const AutoStatusApp = memo(() => {
-  const [stickerSets, setStickerSets] = useState<StickerSet[]>([]);
+  const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
   const [duration, setDuration] = useState(480); // 8 hours in minutes
   const userImageRef = useRef<HTMLDivElement>(null);
 
@@ -130,8 +93,25 @@ const AutoStatusApp = memo(() => {
       return null;
     }
 
+    const {
+      handleScroll: handleContentScroll,
+      isAtBeginning: shouldHideTopBorder,
+    } = useScrolledState();
+
     return (
-      <div>
+      <div
+        // onMouseMove={handleMouseMove}
+        style={{
+          height: '200px'
+        }}
+        onScroll={handleContentScroll}
+        className={
+          buildClassName(
+            "main",
+            IS_TOUCH_ENV ? 'no-scrollbar' : 'custom-scroll'
+          )
+        }
+      >
         {
           stickerSets.map((set, index) => (
             <StickerSet

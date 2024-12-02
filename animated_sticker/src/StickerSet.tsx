@@ -2,8 +2,10 @@ import type { FC } from './teact/teact';
 import React, {
   memo, useEffect, useMemo, useRef, useState,
 } from './teact/teact';
+import { getActions, getGlobal } from './global';
 
-import type { ApiAvailableReaction, ApiReactionWithPaid, ApiSticker } from './api/types';
+import type { ApiSticker } from './api/types';
+import type { ObserveFn } from './hooks/useIntersectionObserver';
 import type { StickerSetOrReactionsSetOrRecent } from './types';
 
 import {
@@ -19,7 +21,9 @@ import {
 } from './config';
 import buildClassName from './util/buildClassName';
 
+import useAppLayout from './hooks/useAppLayout';
 import useFlag from './hooks/useFlag';
+import { useIsIntersecting } from './hooks/useIntersectionObserver';
 import useLastCallback from './hooks/useLastCallback';
 import useMediaTransitionDeprecated from './hooks/useMediaTransitionDeprecated';
 import useResizeObserver from './hooks/useResizeObserver';
@@ -30,8 +34,6 @@ import Button from './Button';
 import Icon from './Icon';
 // import ReactionEmoji from './reactions/ReactionEmoji';
 import StickerButton from './StickerButton';
-
-import './StickerSet.scss';
 
 // import grey from '../../assets/icons/forumTopic/grey.svg';
 
@@ -55,10 +57,10 @@ type OwnProps = {
   isTranslucent?: boolean;
   noContextMenus?: boolean;
   forcePlayback?: boolean;
-  availableReactions?: ApiAvailableReaction[];
+  observeIntersection?: ObserveFn;
+  observeIntersectionForPlayingItems: ObserveFn;
+  observeIntersectionForShowingItems: ObserveFn;
   onStickerSelect?: (sticker: ApiSticker, isSilent?: boolean, shouldSchedule?: boolean) => void;
-  onReactionSelect?: (reaction: ApiReactionWithPaid) => void;
-  onReactionContext?: (reaction: ApiReactionWithPaid) => void;
   onStickerUnfave?: (sticker: ApiSticker) => void;
   onStickerFave?: (sticker: ApiSticker) => void;
   onStickerRemoveRecent?: (sticker: ApiSticker) => void;
@@ -80,7 +82,6 @@ const StickerSet: FC<OwnProps> = ({
   idPrefix,
   isNearActive,
   favoriteStickers,
-  availableReactions,
   isSavedMessages,
   isStatusPicker,
   isReactionPicker,
@@ -94,8 +95,9 @@ const StickerSet: FC<OwnProps> = ({
   isTranslucent,
   noContextMenus,
   forcePlayback,
-  onReactionSelect,
-  onReactionContext,
+  observeIntersection,
+  observeIntersectionForPlayingItems,
+  observeIntersectionForShowingItems,
   onStickerSelect,
   onStickerUnfave,
   onStickerFave,
@@ -104,14 +106,14 @@ const StickerSet: FC<OwnProps> = ({
   onContextMenuClose,
   onContextMenuClick,
 }) => {
-  // const {
-  //   clearRecentStickers,
-  //   clearRecentCustomEmoji,
-  //   clearRecentReactions,
-  //   openPremiumModal,
-  //   toggleStickerSet,
-  //   loadStickers,
-  // } = getActions();
+  const {
+    clearRecentStickers,
+    clearRecentCustomEmoji,
+    clearRecentReactions,
+    openPremiumModal,
+    toggleStickerSet,
+    loadStickers,
+  } = getActions();
 
   // eslint-disable-next-line no-null/no-null
   const ref = useRef<HTMLDivElement>(null);
@@ -123,14 +125,15 @@ const StickerSet: FC<OwnProps> = ({
 
   const { width: windowWidth } = useWindowSize();
   const [isConfirmModalOpen, openConfirmModal, closeConfirmModal] = useFlag();
-  const isMobile = true
+  const { isMobile } = useAppLayout();
 
   const [itemsPerRow, setItemsPerRow] = useState(getItemsPerRowFallback(windowWidth));
 
-  const transitionClassNames = useMediaTransitionDeprecated(stickerSet);
+  const isIntersecting = useIsIntersecting(ref, observeIntersection ?? observeIntersectionForShowingItems);
+  const transitionClassNames = useMediaTransitionDeprecated(isIntersecting);
 
   // `isNearActive` is set in advance during animation, but it is not reliable for short sets
-  const shouldRender = isNearActive;
+  const shouldRender = isNearActive || isIntersecting;
 
   const stickerMarginPx = isMobile ? 8 : 4;
   const emojiMarginPx = isMobile ? 8 : 10;
@@ -139,28 +142,29 @@ const StickerSet: FC<OwnProps> = ({
   const isFavorite = stickerSet.id === FAVORITE_SYMBOL_SET_ID;
   const isPopular = stickerSet.id === POPULAR_SYMBOL_SET_ID;
   const isEmoji = stickerSet.isEmoji;
-  const isPremiumSet = !isRecent
+  // const isPremiumSet = !isRecent && selectIsSetPremium(stickerSet);
+  const isPremiumSet = true
 
   const handleClearRecent = useLastCallback(() => {
     if (isReactionPicker) {
-      // clearRecentReactions();
+      clearRecentReactions();
     } else if (isEmoji) {
-      // clearRecentCustomEmoji();
+      clearRecentCustomEmoji();
     } else {
-      // clearRecentStickers();
+      clearRecentStickers();
     }
     closeConfirmModal();
   });
 
   const handleAddClick = useLastCallback(() => {
     if (isPremiumSet && !isCurrentUserPremium) {
-      // openPremiumModal({
-      //   initialSection: 'animated_emoji',
-      // });
+      openPremiumModal({
+        initialSection: 'animated_emoji',
+      });
     } else {
-      // toggleStickerSet({
-      //   stickerSetId: stickerSet.id,
-      // });
+      toggleStickerSet({
+        stickerSetId: stickerSet.id,
+      });
     }
   });
 
@@ -213,17 +217,14 @@ const StickerSet: FC<OwnProps> = ({
 
   useEffect(() => {
     if (shouldRender && !stickerSet.stickers?.length && !stickerSet.reactions?.length && stickerSet.accessHash) {
-      // loadStickers({
-      //   stickerSetInfo: {
-      //     id: stickerSet.id,
-      //     accessHash: stickerSet.accessHash,
-      //   },
-      // });
+      loadStickers({
+        stickerSetInfo: {
+          id: stickerSet.id,
+          accessHash: stickerSet.accessHash,
+        },
+      });
     }
-  }, [
-    shouldRender, 
-    // loadStickers, 
-    stickerSet]);
+  }, [shouldRender, loadStickers, stickerSet]);
 
   const isLocked = !isSavedMessages && !isCurrentUserPremium && isPremiumSet && !isChatEmojiSet;
 
@@ -245,12 +246,16 @@ const StickerSet: FC<OwnProps> = ({
   const favoriteStickerIdsSet = useMemo(() => (
     favoriteStickers ? new Set(favoriteStickers.map(({ id }) => id)) : undefined
   ), [favoriteStickers]);
-  // const withAddSetButton = !shouldHideHeader && !isRecent && isEmoji && !isPopular && !isChatEmojiSet
-  //   && (!isInstalled || (!isCurrentUserPremium && !isSavedMessages));
-  const withAddSetButton = false
+  const withAddSetButton = !shouldHideHeader && !isRecent && isEmoji && !isPopular && !isChatEmojiSet
+    && (!isInstalled || (!isCurrentUserPremium && !isSavedMessages));
   // const addSetButtonText = useMemo(() => {
-  //   return "Add";
-  // }, [isLocked, isInstalled]);
+  //   if (isLocked) {
+  //     if (isInstalled) return lang('lng_emoji_premium_restore');
+  //     return lang('Unlock');
+  //   }
+
+  //   return lang('Add');
+  // }, [isLocked, lang, isInstalled]);
 
   return (
     <div
@@ -264,21 +269,21 @@ const StickerSet: FC<OwnProps> = ({
       {!shouldHideHeader && (
         <div className="symbol-set-header">
           <p className={buildClassName('symbol-set-title', withAddSetButton && 'symbol-set-title-external')}>
-            {/* {isLocked && <Icon name="lock-badge" className="symbol-set-locked-icon" />} */}
+            {isLocked && <Icon name="lock-badge" className="symbol-set-locked-icon" />}
             <span className="symbol-set-name">{stickerSet.title}</span>
             {/* {(isChatEmojiSet || isChatStickerSet) && (
-              <span className="symbol-set-chat">{"GroupStickers"}</span>
+              <span className="symbol-set-chat">{lang(isChatEmojiSet ? 'GroupEmoji' : 'GroupStickers')}</span>
             )} */}
             {/* {withAddSetButton && Boolean(stickerSet.stickers) && (
               <span className="symbol-set-amount">
-                {"EmojiCount"}
+                {lang(isEmoji ? 'EmojiCount' : 'Stickers', stickerSet.stickers.length, 'i')}
               </span>
             )} */}
           </p>
-          {/* {isRecent && (
+          {isRecent && (
             <Icon className="symbol-set-remove" name="close" onClick={openConfirmModal} />
-          )} */}
-          {/* {withAddSetButton && (
+          )}
+          {withAddSetButton && (
             <Button
               className="symbol-set-add-button"
               withPremiumGradient={isPremiumSet && !isCurrentUserPremium}
@@ -289,7 +294,7 @@ const StickerSet: FC<OwnProps> = ({
             >
               {addSetButtonText}
             </Button>
-          )} */}
+          )}
         </div>
       )}
       <div
@@ -305,18 +310,18 @@ const StickerSet: FC<OwnProps> = ({
           className="shared-canvas"
           style={canCut ? `height: ${heightWhenCut}px;` : undefined}
         />
-        {(isRecent || isFavorite || canCut) && <canvas ref={sharedCanvasHqRef} className="shared-canvas" />}
-        {withDefaultTopicIcon && (
+        {/* {(isRecent || isFavorite || canCut) && <canvas ref={sharedCanvasHqRef} className="shared-canvas" />} */}
+        {/* {withDefaultTopicIcon && (
           <Button
             className="StickerButton custom-emoji"
             color="translucent"
             onClick={handleDefaultTopicIconClick}
             key="default-topic-icon"
           >
-            {/* <img src={grey} alt="Reset" className="sticker-media" draggable={false} /> */}
+            <img src={grey} alt="Reset" className="sticker-media" draggable={false} />
           </Button>
-        )}
-        {withDefaultStatusIcon && (
+        )} */}
+        {/* {withDefaultStatusIcon && (
           <Button
             className="StickerButton custom-emoji status-default"
             color="translucent"
@@ -325,7 +330,7 @@ const StickerSet: FC<OwnProps> = ({
           >
             <Icon name="star" />
           </Button>
-        )}
+        )} */}
         {/* {shouldRender && stickerSet.reactions?.map((reaction) => {
           const reactionId = getReactionKey(reaction);
           const isSelected = reactionId ? selectedReactionIds?.includes(reactionId) : undefined;
@@ -337,6 +342,7 @@ const StickerSet: FC<OwnProps> = ({
               isSelected={isSelected}
               loadAndPlay={loadAndPlay}
               availableReactions={availableReactions}
+              observeIntersection={observeIntersectionForPlayingItems}
               onClick={onReactionSelect!}
               onContextMenu={onReactionContext}
               sharedCanvasRef={sharedCanvasRef}
@@ -347,8 +353,8 @@ const StickerSet: FC<OwnProps> = ({
         })} */}
         {shouldRender && stickerSet.stickers?.slice(0, isCut ? itemsBeforeCutout : stickerSet.stickers.length)
           .map((sticker, i) => {
-            const isHqEmoji = (isRecent || isFavorite);
-              // && selectIsAlwaysHighPriorityEmoji(getGlobal(), sticker.stickerSetInfo);
+            // const isHqEmoji = (isRecent || isFavorite) && selectIsAlwaysHighPriorityEmoji(getGlobal(), sticker.stickerSetInfo);
+            const isHqEmoji = false
             const canvasRef = (canCut && i >= itemsBeforeCutout) || isHqEmoji
               ? sharedCanvasHqRef
               : sharedCanvasRef;
@@ -360,6 +366,8 @@ const StickerSet: FC<OwnProps> = ({
                 key={sticker.id}
                 sticker={sticker}
                 size={itemSize}
+                observeIntersection={observeIntersectionForPlayingItems}
+                observeIntersectionForShowing={observeIntersectionForShowingItems}
                 noPlay={!loadAndPlay}
                 isSavedMessages={isSavedMessages}
                 isStatusPicker={isStatusPicker}
@@ -371,7 +379,7 @@ const StickerSet: FC<OwnProps> = ({
                 withTranslucentThumb={isTranslucent}
                 onClick={onStickerSelect}
                 clickArg={sticker}
-                isSelected={true}
+                isSelected={isSelected}
                 onUnfaveClick={isFavorite && favoriteStickerIdsSet?.has(sticker.id) ? onStickerUnfave : undefined}
                 onFaveClick={!favoriteStickerIdsSet?.has(sticker.id) ? onStickerFave : undefined}
                 onRemoveRecentClick={isRecent ? onStickerRemoveRecent : undefined}
@@ -385,7 +393,7 @@ const StickerSet: FC<OwnProps> = ({
               />
             );
           })}
-        {isCut && totalItemsCount > itemsBeforeCutout && (
+        {/* {isCut && totalItemsCount > itemsBeforeCutout && (
           <Button
             className="StickerButton custom-emoji set-expand"
             round
@@ -395,7 +403,7 @@ const StickerSet: FC<OwnProps> = ({
           >
             +{totalItemsCount - itemsBeforeCutout}
           </Button>
-        )}
+        )} */}
       </div>
 
       {/* {isRecent && (
