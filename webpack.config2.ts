@@ -1,6 +1,8 @@
-const path = require('path');
-const webpack = require('webpack');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+import 'webpack-dev-server';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+
+import path from 'path';
+import webpack from 'webpack';
 
 const {
   HEAD,
@@ -11,7 +13,7 @@ const {
 
 const CSP = `
   default-src 'self';
-  connect-src 'self' blob: http: https: wss://overly-boss-kangaroo.ngrok-free.app:1234 ${APP_ENV === 'development' ? 'wss:' : ''};
+  connect-src 'self' wss://*.web.telegram.org blob: http: https: ${APP_ENV === 'development' ? 'wss:' : ''};
   script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://t.me/_websync_ https://telegram.me/_websync_ https://telegram.org;
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https://autostatus.nashruz.uz https://overly-boss-kangaroo.ngrok-free.app;

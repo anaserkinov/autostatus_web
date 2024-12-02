@@ -1,23 +1,7 @@
 import type { TeactNode } from '../teact/teact';
 
 import type {
-  ApiBotInlineMediaResult,
-  ApiBotInlineResult,
-  ApiBotInlineSwitchPm,
-  ApiBotInlineSwitchWebview,
-  ApiChat,
-  ApiChatInviteImporter,
-  ApiDocument,
-  ApiExportedInvite,
-  ApiFakeType,
-  ApiLabeledPrice,
-  ApiMessage,
-  ApiPhoto,
-  ApiReaction,
-  ApiReactionWithPaid,
-  ApiStickerSet,
-  ApiUser,
-  ApiVideo,
+  ApiStickerSet
 } from '../api/types';
 import type { SearchResultKey } from '../util/keys/searchResultKey';
 import type { IconName } from './icons';
@@ -40,12 +24,8 @@ export type ScrollTargetPosition = ScrollLogicalPosition | 'centerOrTop';
 
 export interface IAlbum {
   albumId: string;
-  messages: ApiMessage[];
   isPaidMedia?: boolean;
-  mainMessage: ApiMessage;
-  captionMessage?: ApiMessage;
   hasMultipleCaptions: boolean;
-  commentsMessage?: ApiMessage;
 }
 
 export type ThreadId = string | number;
@@ -147,10 +127,6 @@ export interface ApiPrivacySettings {
 export interface ApiInputPrivacyRules {
   visibility: PrivacyVisibility;
   isUnspecified?: boolean;
-  allowedUsers?: ApiUser[];
-  allowedChats?: ApiChat[];
-  blockedUsers?: ApiUser[];
-  blockedChats?: ApiChat[];
   shouldAllowPremium?: true;
 }
 
@@ -163,7 +139,6 @@ export interface ShippingOption {
   id: string;
   title: string;
   amount: number;
-  prices: ApiLabeledPrice[];
 }
 
 export enum SettingsScreens {
@@ -257,7 +232,7 @@ export enum SettingsScreens {
 export type StickerSetOrReactionsSetOrRecent = Pick<ApiStickerSet, (
   'id' | 'accessHash' | 'title' | 'count' | 'stickers' | 'isEmoji' | 'installedDate' | 'isArchived' |
   'hasThumbnail' | 'hasStaticThumb' | 'hasAnimatedThumb' | 'hasVideoThumb' | 'thumbCustomEmojiId'
-)> & { reactions?: ApiReactionWithPaid[] };
+)> & { };
 
 export enum LeftColumnContent {
   ChatList,
@@ -298,7 +273,6 @@ export enum RightColumnContent {
   MonetizationStatistics,
 }
 
-export type MediaViewerMedia = ApiPhoto | ApiVideo | ApiDocument;
 
 export enum MediaViewerOrigin {
   Inline,
@@ -357,13 +331,7 @@ export interface ManagementState {
   checkedUsername?: string;
   isUsernameAvailable?: boolean;
   error?: string;
-  invites?: ApiExportedInvite[];
-  revokedInvites?: ApiExportedInvite[];
-  editingInvite?: ApiExportedInvite;
   inviteInfo?: {
-    invite: ApiExportedInvite;
-    importers?: ApiChatInviteImporter[];
-    requesters?: ApiChatInviteImporter[];
   };
 }
 
@@ -391,7 +359,6 @@ export type SharedMediaType = 'media' | 'documents' | 'links' | 'audio' | 'voice
 export type MiddleSearchType = 'chat' | 'myChats' | 'channels';
 export type MiddleSearchParams = {
   requestedQuery?: string;
-  savedTag?: ApiReaction;
   isHashtag?: boolean;
   fetchingQuery?: string;
   type: MiddleSearchType;
@@ -490,10 +457,7 @@ export type InlineBotSettings = {
   query?: string;
   offset?: string;
   canLoadMore?: boolean;
-  results?: (ApiBotInlineResult | ApiBotInlineMediaResult)[];
   isGallery?: boolean;
-  switchPm?: ApiBotInlineSwitchPm;
-  switchWebview?: ApiBotInlineSwitchWebview;
   cacheTime: number;
 };
 
@@ -508,7 +472,6 @@ export type CustomPeer = {
   isAvatarSquare?: boolean;
   peerColorId?: number;
   isVerified?: boolean;
-  fakeType?: ApiFakeType;
   customPeerAvatarColor?: string;
   withPremiumGradient?: boolean;
 } & ({

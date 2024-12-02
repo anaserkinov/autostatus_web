@@ -142,7 +142,11 @@ const AnimatedSticker: FC<OwnProps> = ({
       return;
     }
 
-    const newAnimation = getRLottie().init(
+    const rLottie = getRLottie()
+    if (!rLottie) {
+      return;
+    }
+    const newAnimation = rLottie.init(
       tgsUrl,
       container,
       renderId || generateUniqueId(),

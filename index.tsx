@@ -8,17 +8,18 @@ if (typeof process === 'undefined' || !process.env) {
 
 import React from './animated_sticker/src/teact/teact';
 import TeactDOM from './animated_sticker/src/teact/teact-dom';
+import { getGlobal, setGlobal } from './animated_sticker/src/global';
 import { memo, useRef, useState, useEffect } from './animated_sticker/src/teact/teact';
 import StickerView from './animated_sticker/src/StickerView';
 import StickerSet from './animated_sticker/src/StickerSet';
 import CustomEmojiPicker from './animated_sticker/src/CustomEmojiPicker'
 import useScrolledState from './animated_sticker/src/hooks/useScrolledState';
 import buildClassName from './animated_sticker/src/util/buildClassName';
-import {ApiSticker, ApiStickerSet} from './animated_sticker/src/api/types'
+import { ApiSticker, ApiStickerSet } from './animated_sticker/src/api/types'
+import useLastCallback from './animated_sticker/src/hooks/useLastCallback';
 
 import './animated_sticker/src/styles/index.scss';
 import { IS_TOUCH_ENV } from './animated_sticker/src/util/windowEnvironment';
-
 
 // Set compatibility test to true
 (window as any).isCompatTestPassed = true;
@@ -29,14 +30,10 @@ const AutoStatusApp = memo(() => {
   const userImageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Signal that the app is ready
     window.Telegram.WebApp.ready();
 
-    // Get initData from Telegram WebApp
     const initData = window.Telegram.WebApp.initData || '';
 
-    // Fetch sticker sets
-    console.log("fetching sticker sets");
     fetch('https://autostatus.nashruz.uz/app/stickers', {
       headers: {
         'initData': `${initData}`
@@ -44,46 +41,65 @@ const AutoStatusApp = memo(() => {
     })
       .then(response => response.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          const processedData = data.map(set => ({
-            ...set,
-            stickers: set.stickers.map(sticker => ({
-              ...sticker,
-              id: sticker.customEmojiId,
-              isLottie: sticker.filePath.includes('.tgs'),
-              filePath: `${baseUrl}/download/${sticker.filePath}`,
-              thumbnail: {
-                dataUri: `${baseUrl}/download/${sticker.thumbnailPath}`
-              },
-              isCustomEmoji: true,
-              shouldUseTextColor: false,
-              isVideo: false
-            }))
-          }));
-          setStickerSets(processedData);
-        } else if (data.result && Array.isArray(data.result)) {
-          const processedData = data.result.map(set => ({
-            ...set,
-            stickers: set.stickers.map(sticker => ({
-              ...sticker,
-              id: sticker.customEmojiId,
-              isLottie: sticker.filePath.includes('.tgs'),
-              filePath: `${baseUrl}/download/${sticker.filePath}`,
-              thumbnail: {
-                dataUri: `${baseUrl}/download/${sticker.thumbnailPath}`
-              },
-              isCustomEmoji: true,
-              shouldUseTextColor: false,
-              isVideo: false
-            }))
-          }));
-          setStickerSets(processedData);
-        } else {
-          console.error('Unexpected data format:', data);
-          setStickerSets([]);
-        }
+        const processedData = data.result.map(set => ({
+          ...set,
+          thumbCustomEmojiId: `${baseUrl}/download/${set.thumbCustomEmojiId}`,
+          stickers: set.stickers.map(sticker => ({
+            ...sticker,
+            id: `${baseUrl}/download/${sticker.id}`,
+            thumbnail: sticker.thumbnail ? {
+              dataUri: `${baseUrl}/download/${sticker.thumbnail.dataUri}`
+            } : undefined
+          }))
+        }));
+        const setsById = processedData.reduce((acc, set) => {
+          acc[set.id] = set;
+          return acc;
+        }, {} as Record<string, any>);
+
+        const setIds = processedData.map(set => set.id)
+
+        setGlobal({
+          ...getGlobal(),
+          stickers: {
+            setsById: setsById,
+            added: {},
+            recent: {
+              stickers: []
+            },
+            favorite: {
+              stickers: []
+            },
+            greeting: {
+              stickers: []
+            },
+            premium: {
+              stickers: []
+            },
+            featured: {},
+            forEmoji: {},
+            effect: {
+              stickers: [],
+              emojis: []
+            },
+            starGifts: { stickers: {} }
+          },
+          customEmojis: {
+            added: {
+              setIds: setIds
+            },
+            lastRendered: [],
+            byId: {},
+            forEmoji: {},
+            statusRecent: {}
+          }
+        });
+
+        setStickerSets(processedData);
       })
-      .catch(error => console.error('Error fetching sticker sets:', error));
+      .catch(error => {
+        console.error('Error fetching sticker sets:', error);
+      });
   }, []);
 
   const baseUrl = 'https://autostatus.nashruz.uz/app';
@@ -92,6 +108,18 @@ const AutoStatusApp = memo(() => {
     if (!Array.isArray(stickerSets) || stickerSets.length === 0) {
       return null;
     }
+
+
+    const handleCustomEmojiSelect = useLastCallback((emoji: ApiSticker) => {
+      console.log('Selected sticker:', emoji);
+    });
+
+    return <CustomEmojiPicker
+      className='picker-tab'
+      isStatusPicker={true}
+      loadAndPlay={true}
+      onCustomEmojiSelect={handleCustomEmojiSelect}
+    />
 
     const {
       handleScroll: handleContentScroll,
@@ -187,6 +215,7 @@ const AutoStatusApp = memo(() => {
           }}>
             {stickerSets[0]?.stickers[0] && (
               <StickerView
+                containerRef={userImageRef}
                 sticker={stickerSets[0].stickers[0]}
                 size={40}
                 noPlay={false}

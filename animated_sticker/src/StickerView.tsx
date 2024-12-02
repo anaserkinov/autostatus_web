@@ -79,7 +79,7 @@ const StickerView: FC<OwnProps> = ({
   onAnimatedStickerLoop,
 }) => {
   const {
-    id, isLottie, stickerSetInfo, emoji,
+    id, isLottie, emoji,
   } = sticker;
   const [isVideoBroken, markVideoBroken] = useFlag();
   const isUnsupportedVideo = sticker.isVideo && (
@@ -118,7 +118,7 @@ const StickerView: FC<OwnProps> = ({
   const shouldSkipFullMedia = Boolean(shouldForcePreview || (
     fullMediaHash === previewMediaHash && (cachedPreview || previewMediaData)
   ));
-  const fullMediaData = useMedia(fullMediaHash || sticker.filePath, !shouldLoad || shouldSkipFullMedia);
+  const fullMediaData = useMedia(fullMediaHash || sticker.id, !shouldLoad || shouldSkipFullMedia);
   const shouldRenderFullMedia = isReadyToMountFullMedia && !shouldSkipFullMedia && fullMediaData && !isVideoBroken;
   const [isPlayerReady, markPlayerReady] = useFlag();
   const isFullMediaReady = shouldRenderFullMedia && (isStatic || isPlayerReady);

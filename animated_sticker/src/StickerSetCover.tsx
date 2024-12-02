@@ -17,10 +17,11 @@ import useCoordsInSharedCanvas from './hooks/useCoordsInSharedCanvas';
 import { useIsIntersecting } from './hooks/useIntersectionObserver';
 import useMedia from './hooks/useMedia';
 import useMediaTransitionDeprecated from './hooks/useMediaTransitionDeprecated';
+import useMediaTransition from './hooks/useMediaTransition';
 
 import AnimatedSticker from './AnimatedSticker';
 
-import styles from './StickerSetCover.module.scss';
+import './StickerSetCover.module.scss';
 
 type OwnProps = {
   stickerSet: ApiStickerSet;
@@ -59,10 +60,16 @@ const StickerSetCover: FC<OwnProps> = ({
   const staticHash = shouldFallbackToStatic && getStickerMediaHash(stickerSet.stickers![0], 'preview');
   const staticMediaData = useMedia(staticHash, !isIntersecting);
 
-  const mediaHash = ((hasThumbnail && !shouldFallbackToStatic) || hasAnimatedThumb) && `stickerSet${stickerSet.id}`;
+  const mediaHash = ((hasThumbnail && !shouldFallbackToStatic) || hasAnimatedThumb) && thumbCustomEmojiId;
+  console.log("thumb", thumbCustomEmojiId)
+  console.log("thumb2", mediaHash)
   const mediaData = useMedia(mediaHash, !isIntersecting);
   const isReady = thumbCustomEmojiId || mediaData || staticMediaData;
   const transitionClassNames = useMediaTransitionDeprecated(isReady);
+
+  const fullMediaRef = useMediaTransition<HTMLElement>(isReady, {
+  });
+
 
   const coords = useCoordsInSharedCanvas(containerRef, sharedCanvasRef);
 
@@ -75,7 +82,7 @@ const StickerSetCover: FC<OwnProps> = ({
   }, [isIntersecting, loadStickers, stickerSet]);
 
   return (
-    <div ref={containerRef} className={buildClassName(styles.root, 'sticker-set-cover')}>
+    <div ref={containerRef} className={buildClassName("root", 'sticker-set-cover')}>
       {isReady ? (
         hasAnimatedThumb ? (
           <AnimatedSticker
@@ -91,7 +98,7 @@ const StickerSetCover: FC<OwnProps> = ({
           <img
             src={mediaData || staticMediaData}
             style={colorFilter}
-            className={buildClassName(styles.image, transitionClassNames)}
+            className={buildClassName("image", transitionClassNames)}
             alt=""
             draggable={false}
           />
