@@ -20,7 +20,7 @@ import useLastCallback from './src/hooks/useLastCallback';
 import { IS_TOUCH_ENV } from './src/util/windowEnvironment';
 
 import './src/styles/index.scss';
-import sliderStyle from './Slider.module.scss';
+import sliderStyle from './src/Slider.module.scss';
 
 
 // Set compatibility test to true
@@ -227,7 +227,7 @@ const AutoStatusApp = memo(() => {
           </div>
         </div>
       </div>
-      <div className="duration-slider-container">
+      <div className={sliderStyle.durationSliderContainer}>
         <div className="duration-header">
           <span className="duration-label">Duration</span>
           <span className="duration-value">{Math.floor(duration / 60)} hours</span>
