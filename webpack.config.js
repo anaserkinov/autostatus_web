@@ -1,20 +1,16 @@
 const path = require('path');
 const webpack = require('webpack');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-const {
-  HEAD,
-  APP_ENV = 'production',
-  APP_MOCKED_CLIENT = '',
-  IS_PACKAGED_ELECTRON,
-} = process.env;
+
+APP_ENV = 'development'
 
 const CSP = `
   default-src 'self';
-  connect-src 'self' blob: http: https: wss://overly-boss-kangaroo.ngrok-free.app:1234 ${APP_ENV === 'development' ? 'wss:' : ''};
+  connect-src 'self' wss://*.web.telegram.org blob: http: https: ${APP_ENV === 'development' ? 'wss:' : ''};
   script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://t.me/_websync_ https://telegram.me/_websync_ https://telegram.org;
   style-src 'self' 'unsafe-inline';
-  img-src 'self' blob: data: https://autostatus.nashruz.uz https://overly-boss-kangaroo.ngrok-free.app;
+  img-src 'self' https://autostatus.nashruz.uz https://overly-boss-kangaroo.ngrok-free.app blob: data:;
   media-src 'self' blob: data: https://autostatus.nashruz.uz https://overly-boss-kangaroo.ngrok-free.app;
   object-src 'none';
   frame-src http: https:;
@@ -51,51 +47,59 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.(ts|tsx|js|mjs|cjs)$/,
-                loader: 'babel-loader',
-                exclude: /node_modules/,
+              test: /\.(ts|tsx|js|mjs|cjs)$/,
+              loader: 'babel-loader',
+              exclude: /node_modules/,
             },
             {
-                test: /\.wasm$/,
-                type: 'asset/resource',
+              test: /\.css$/,
+              use: [
+                MiniCssExtractPlugin.loader,
+                {
+                  loader: 'css-loader',
+                  options: {
+                    importLoaders: 1,
+                    modules: {
+                      namedExport: false,
+                      auto: true,
+                    },
+                  },
+                },
+                'postcss-loader',
+              ],
             },
             {
-                test: /\.css$/,
-                use: [
-                  MiniCssExtractPlugin.loader,
-                  {
-                    loader: 'css-loader',
-                    options: {
-                      importLoaders: 1,
-                      modules: {
-                        namedExport: false,
-                        auto: true,
-                      },
+              test: /\.scss$/,
+              use: [
+                MiniCssExtractPlugin.loader,
+                {
+                  loader: 'css-loader',
+                  options: {
+                    modules: {
+                      namedExport: false,
+                      exportLocalsConvention: 'camelCase',
+                      auto: true,
+                      localIdentName: APP_ENV === 'production' ? '[sha1:hash:base64:8]' : '[name]__[local]',
                     },
                   },
-                  'postcss-loader',
-                ],
-              },
-              {
-                test: /\.scss$/,
-                use: [
-                  MiniCssExtractPlugin.loader,
-                  {
-                    loader: 'css-loader',
-                    options: {
-                      modules: {
-                        namedExport: false,
-                        exportLocalsConvention: 'camelCase',
-                        auto: true,
-                        localIdentName: APP_ENV === 'production' ? '[sha1:hash:base64:8]' : '[name]__[local]',
-                      },
-                    },
-                  },
-                  'postcss-loader',
-                  'sass-loader',
-                ],
-              },
-        ]
+                },
+                'postcss-loader',
+                'sass-loader',
+              ],
+            },
+            {
+              test: /\.(woff(2)?|ttf|eot|svg|png|jpg|tgs)(\?v=\d+\.\d+\.\d+)?$/,
+              type: 'asset/resource',
+            },
+            {
+              test: /\.wasm$/,
+              type: 'asset/resource',
+            },
+            {
+              test: /\.(txt|tl|strings)$/i,
+              type: 'asset/source',
+            },
+          ],
     },
     output: {
         filename: 'main.js',

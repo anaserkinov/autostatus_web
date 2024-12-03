@@ -1,5 +1,4 @@
 import './animated_sticker/src/util/handleError';
-import './src/styles/Slider.scss';
 
 // Ensure process.env exists
 if (typeof process === 'undefined' || !process.env) {
@@ -18,8 +17,11 @@ import buildClassName from './animated_sticker/src/util/buildClassName';
 import { ApiSticker, ApiStickerSet } from './animated_sticker/src/api/types'
 import useLastCallback from './animated_sticker/src/hooks/useLastCallback';
 
-import './animated_sticker/src/styles/index.scss';
 import { IS_TOUCH_ENV } from './animated_sticker/src/util/windowEnvironment';
+
+import './animated_sticker/src/styles/index.scss';
+import sliderStyle from './src/styles/Slider.module.scss';
+
 
 // Set compatibility test to true
 (window as any).isCompatTestPassed = true;
@@ -179,6 +181,7 @@ const AutoStatusApp = memo(() => {
     );
   };
 
+  const sliderClassName = buildClassName("Slider", sliderStyle.durationSliderContainer)
   return (
     <div className="container" style={{ width: '100%' }}>
       <div className="user-image-container" style={{
@@ -225,7 +228,7 @@ const AutoStatusApp = memo(() => {
           </div>
         </div>
       </div>
-      <div className="duration-slider-container">
+      <div className={sliderClassName}>
         <div className="duration-header">
           <span className="duration-label">Duration</span>
           <span className="duration-value">{Math.floor(duration / 60)} hours</span>
