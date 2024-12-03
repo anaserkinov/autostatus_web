@@ -4,6 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "clean": "rm -rf ./dist",
     "start": "webpack serve --mode development",
     "build": "webpack --mode production"
   },
@@ -33,6 +34,7 @@
     "clean-webpack-plugin": "^4.0.0",
     "cross-env": "^7.0.3",
     "css-loader": "^7.1.2",
+    "css-modules-typescript-loader": "^4.0.1",
     "mini-css-extract-plugin": "^2.9.2",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",

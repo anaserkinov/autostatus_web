@@ -1,7 +1,8 @@
 const path = require('path');
 const webpack = require('webpack');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const autoprefixer = require('autoprefixer')
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 APP_ENV = 'development'
 
@@ -33,12 +34,7 @@ module.exports = {
     plugins: [
         new webpack.ProvidePlugin({
             process: 'process/browser',
-        }),
-        new MiniCssExtractPlugin({
-            filename: '[name].[contenthash].css',
-            chunkFilename: '[name].[chunkhash].css',
-            ignoreOrder: true,
-          }),
+        })
     ],
     experiments: {
         asyncWebAssembly: true,
@@ -52,53 +48,9 @@ module.exports = {
               exclude: /node_modules/,
             },
             {
-              test: /\.css$/,
-              use: [
-                MiniCssExtractPlugin.loader,
-                {
-                  loader: 'css-loader',
-                  options: {
-                    importLoaders: 1,
-                    modules: {
-                      namedExport: false,
-                      auto: true,
-                    },
-                  },
-                },
-                'postcss-loader',
-              ],
-            },
-            {
-              test: /\.scss$/,
-              use: [
-                MiniCssExtractPlugin.loader,
-                {
-                  loader: 'css-loader',
-                  options: {
-                    modules: {
-                      namedExport: false,
-                      exportLocalsConvention: 'camelCase',
-                      auto: true,
-                      localIdentName: APP_ENV === 'production' ? '[sha1:hash:base64:8]' : '[name]__[local]',
-                    },
-                  },
-                },
-                'postcss-loader',
-                'sass-loader',
-              ],
-            },
-            {
-              test: /\.(woff(2)?|ttf|eot|svg|png|jpg|tgs)(\?v=\d+\.\d+\.\d+)?$/,
-              type: 'asset/resource',
-            },
-            {
               test: /\.wasm$/,
               type: 'asset/resource',
-            },
-            {
-              test: /\.(txt|tl|strings)$/i,
-              type: 'asset/source',
-            },
+            }
           ],
     },
     output: {
@@ -118,7 +70,7 @@ module.exports = {
             publicPath: '/',
         },
         {
-            directory: path.join(__dirname, 'animated_sticker/src/rlottie'),
+            directory: path.join(__dirname, 'src/rlottie'),
             publicPath: '/',
         }],
         historyApiFallback: true,

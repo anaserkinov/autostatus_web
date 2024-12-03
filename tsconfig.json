@@ -23,9 +23,9 @@
   },
     "include": [
       "src",
-      "animated_sticker",
       "webpack.config.js",
       "babel.config.js",
+      "src/**/*.ts", "src/**/*.tsx", "src/global.d.ts"
     ]
   }
   

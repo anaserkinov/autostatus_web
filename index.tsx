@@ -1,26 +1,26 @@
-import './animated_sticker/src/util/handleError';
+import './src/util/handleError';
 
 // Ensure process.env exists
 if (typeof process === 'undefined' || !process.env) {
   (window as any).process = { env: { NODE_ENV: 'development' } };
 }
 
-import React from './animated_sticker/src/teact/teact';
-import TeactDOM from './animated_sticker/src/teact/teact-dom';
-import { getGlobal, setGlobal } from './animated_sticker/src/global';
-import { memo, useRef, useState, useEffect } from './animated_sticker/src/teact/teact';
-import StickerView from './animated_sticker/src/StickerView';
-import StickerSet from './animated_sticker/src/StickerSet';
-import CustomEmojiPicker from './animated_sticker/src/CustomEmojiPicker'
-import useScrolledState from './animated_sticker/src/hooks/useScrolledState';
-import buildClassName from './animated_sticker/src/util/buildClassName';
-import { ApiSticker, ApiStickerSet } from './animated_sticker/src/api/types'
-import useLastCallback from './animated_sticker/src/hooks/useLastCallback';
+import React from './src/teact/teact';
+import TeactDOM from './src/teact/teact-dom';
+import { getGlobal, setGlobal } from './src/global';
+import { memo, useRef, useState, useEffect } from './src/teact/teact';
+import StickerView from './src/StickerView';
+import StickerSet from './src/StickerSet';
+import CustomEmojiPicker from './src/CustomEmojiPicker'
+import useScrolledState from './src/hooks/useScrolledState';
+import buildClassName from './src/util/buildClassName';
+import { ApiSticker, ApiStickerSet } from './src/api/types'
+import useLastCallback from './src/hooks/useLastCallback';
 
-import { IS_TOUCH_ENV } from './animated_sticker/src/util/windowEnvironment';
+import { IS_TOUCH_ENV } from './src/util/windowEnvironment';
 
-import './animated_sticker/src/styles/index.scss';
-import sliderStyle from './src/styles/Slider.module.scss';
+import './src/styles/index.scss';
+import sliderStyle from './Slider.module.scss';
 
 
 // Set compatibility test to true
@@ -181,7 +181,6 @@ const AutoStatusApp = memo(() => {
     );
   };
 
-  const sliderClassName = buildClassName("Slider", sliderStyle.durationSliderContainer)
   return (
     <div className="container" style={{ width: '100%' }}>
       <div className="user-image-container" style={{
@@ -228,7 +227,7 @@ const AutoStatusApp = memo(() => {
           </div>
         </div>
       </div>
-      <div className={sliderClassName}>
+      <div className="duration-slider-container">
         <div className="duration-header">
           <span className="duration-label">Duration</span>
           <span className="duration-value">{Math.floor(duration / 60)} hours</span>
