@@ -29,17 +29,19 @@ const AutoStatusApp = memo(() => {
   const userImageRef = useRef<HTMLDivElement>(null);
   const userContainerRef = useRef<HTMLDivElement>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setStickerPackHeight(window.innerHeight - ((userContainerRef.current?.clientHeight ?? 0) + (sliderRef.current?.clientHeight ?? 0) + (buttonRef.current?.clientHeight ?? 0) + 50))
-  }, [userContainerRef.current?.clientHeight, sliderRef.current?.clientHeight, buttonRef.current?.clientHeight])
+    const height = window.innerHeight - ((userContainerRef.current?.clientHeight ?? 0) + (sliderRef.current?.clientHeight ?? 0)) - 24
+    console.log("height changed", height)
+    setStickerPackHeight(height)
+  }, [userContainerRef.current?.clientHeight, sliderRef.current?.clientHeight, ])
 
+
+  window.Telegram.WebApp.MainButton.text = "Save";
+  window.Telegram.WebApp.MainButton.show();
 
   useEffect(() => {
     window.Telegram.WebApp.ready();
-
-    window.Telegram.WebApp;
 
     const initData = window.Telegram.WebApp.initData || '';
 
@@ -179,60 +181,20 @@ const AutoStatusApp = memo(() => {
   );
 
   return (
-    <div className="container" style={{ width: '100%', display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100vh" }}>
-      <div ref={userContainerRef} className="user-image-container" style={{
-        background: 'var(--tg-theme-bg-color)',
-        padding: '8px 20px 16px 20px',
-        borderRadius: '12px',
-        margin: '8px auto',
-        width: '90%',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '10px'
-      }}>
-        <div className="user-name" style={{
-          color: 'var(--tg-theme-text-color)',
-          fontSize: '18px',
-          fontWeight: 500
-        }}>
+    <div className={style.container}>
+      <div ref={userContainerRef} className={style.userContainer}>
+        <div className={style.userName}>
           {window.Telegram.WebApp.initDataUnsafe.user?.first_name || 'User'}
         </div>
-        <div className="user-image"
+        <div className={style.userImage}
           style={{
-            backgroundImage: `url(${baseUrl}/download/thumbnails/image.jpg)`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            width: '150px',
-            height: '150px',
-            borderRadius: '50%',
-            margin: '0 auto',
-            position: 'relative',
-            overflow: 'visible'
+            backgroundImage: `url(${baseUrl}/download/thumbnails/image.jpg)`
           }}>
           {selectedStickers.length > 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                width: '50px',
-                height: '50px',
-                borderRadius: '50%',
-                backgroundColor: 'var(--tg-theme-secondary-bg-color)',
-                border: '2px solid var(--tg-theme-bg-color)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+            <div className={style.stickerContainer}>
               <div
-                className='StickerButton'
-                ref={userImageRef}
-                style={{
-                  height: '40px',
-                  width: '40px',
-                  position: 'relative'
-                }}>
+                className={`${style.stickerButton} StickerButton`}
+                ref={userImageRef}>
                 <StickerView
                   containerRef={userImageRef}
                   sticker={selectedStickers[0]}
@@ -245,11 +207,11 @@ const AutoStatusApp = memo(() => {
             </div>
           )}
         </div>
-        <div
+        {/* <div
             ref={headerRef}
             className={headerClassName}
-          >
-            <div className="shared-canvas-container">
+          > */}
+            <div className={style.selectedStickers}>
               <canvas ref={sharedCanvasHqRef} className="shared-canvas" />
               {
                 selectedStickers.map((sticker) => (
@@ -273,7 +235,7 @@ const AutoStatusApp = memo(() => {
                 ))
               }
             </div>
-          </div>
+          {/* </div> */}
       </div>
       <div className={style.durationSliderContainer} ref={sliderRef}>
         <div className={style.durationHeader}>
@@ -297,21 +259,8 @@ const AutoStatusApp = memo(() => {
           style={{ '--slider-percentage': `${((duration - 10) / (1440 - 10)) * 100}%` } as React.CSSProperties}
         />
       </div>
-      <div className="sticker-pack" style={{ width: '100%', flexGrow: 1, marginBottom: '16px', padding: '0 16px' }}>
+      <div className={style.stickerPack} style={{ width: '100%', flexGrow: 1, marginBottom: '16px', padding: '0 16px' }}>
         {renderStickers()}
-      </div>
-      <div ref={buttonRef} style={{ marginTop: '8px', marginBottom: '8px', padding: '0 16px' }}>
-        <Button
-          key="save_button"
-          className="Save_Button"
-          ariaLabel={"Label"}
-          pill
-          onClick={() => { }}
-        >
-          {(
-            "Save"
-          )}
-        </Button>
       </div>
     </div>
   );
