@@ -8,26 +8,28 @@ import StickerView from './src/StickerView';
 import CustomEmojiPicker from './src/CustomEmojiPicker'
 import Button from './src/Button'
 import { ApiSticker, ApiStickerSet } from './src/api/types'
-import useLastCallback from './src/hooks/useLastCallback';
-
+import animateHorizontalScroll from './src/util/animateHorizontalScroll';
+import buildClassName from './src/util/buildClassName';
+import useHorizontalScroll from './src/hooks/useHorizontalScroll';
+import useAppLayout from './src/hooks/useAppLayout';
 
 import './src/styles/index.scss';
-import sliderStyle from './src/Slider.module.scss';
+import pickerStyles from './src/StickerPicker.module.scss';
 import './src/StickerButton.scss';
-
+import style from './src/index.module.scss';
 
 
 (window as any).isCompatTestPassed = true;
 
 const AutoStatusApp = memo(() => {
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
-  const [duration, setDuration] = useState(0); // 8 hours in minutes
+  const [duration, setDuration] = useState(0); 
+  const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
+  const [stickerPackHeight, setStickerPackHeight] = useState(235)
   const userImageRef = useRef<HTMLDivElement>(null);
   const userContainerRef = useRef<HTMLDivElement>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLDivElement>(null)
-
-  const [stickerPackHeight, setStickerPackHeight] = useState(235)
 
   useEffect(() => {
     setStickerPackHeight(window.innerHeight - ((userContainerRef.current?.clientHeight ?? 0) + (sliderRef.current?.clientHeight ?? 0) + (buttonRef.current?.clientHeight ?? 0) + 50))
@@ -112,15 +114,31 @@ const AutoStatusApp = memo(() => {
 
   const baseUrl = 'https://autostatus.nashruz.uz/app';
 
+  const handleCustomEmojiSelect = (sticker: ApiSticker) => {
+    setSelectedStickers(prevStickers => {
+      // If sticker already exists, remove it (toggle behavior)
+      const existingIndex = prevStickers.findIndex(s => s.id === sticker.id);
+      if (existingIndex !== -1) {
+        const newStickers = [...prevStickers];
+        newStickers.splice(existingIndex, 1);
+        return newStickers;
+      }
+      // Add new sticker
+      return [...prevStickers, sticker];
+    });
+
+    setStickerSets(prevSets => {
+      if (!prevSets.length) {
+        return [{ id: 'selected', title: 'Selected', stickers: [sticker] }];
+      }
+      return [{ ...prevSets[0], stickers: [sticker] }];
+    });
+  };
+
   const renderStickers = () => {
     if (!Array.isArray(stickerSets) || stickerSets.length === 0) {
       return null;
     }
-
-
-    const handleCustomEmojiSelect = useLastCallback((emoji: ApiSticker) => {
-      console.log('Selected sticker:', emoji);
-    });
 
     console.log("height", stickerPackHeight)
 
@@ -129,10 +147,36 @@ const AutoStatusApp = memo(() => {
       isStatusPicker={true}
       loadAndPlay={true}
       isTranslucent={true}
+      selectedReactionIds={selectedStickers.map(s => s.id)}
       onCustomEmojiSelect={handleCustomEmojiSelect}
       customHeight={stickerPackHeight}
     />
   };
+
+
+  const { isMobile } = useAppLayout();
+
+  const headerRef = useRef<HTMLDivElement>(null);
+  const sharedCanvasHqRef = useRef<HTMLCanvasElement>(null);
+  useHorizontalScroll(headerRef, isMobile);
+
+  // Scroll container and header when active set changes
+  const HEADER_BUTTON_WIDTH = 36
+  const activeSetIndex = 0
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+
+    const newLeft = activeSetIndex * HEADER_BUTTON_WIDTH - (header.offsetWidth / 2 - HEADER_BUTTON_WIDTH / 2);
+
+    animateHorizontalScroll(header, newLeft);
+  }, [activeSetIndex]);
+  const headerClassName = buildClassName(
+    pickerStyles.header,
+    'no-scrollbar'
+  );
 
   return (
     <div className="container" style={{ width: '100%', display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100vh" }}>
@@ -166,23 +210,23 @@ const AutoStatusApp = memo(() => {
             position: 'relative',
             overflow: 'visible'
           }}>
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              width: '50px',
-              height: '50px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--tg-theme-secondary-bg-color)',
-              border: '2px solid var(--tg-theme-bg-color)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-            {stickerSets[0]?.stickers[0] && (
+          {selectedStickers.length > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                width: '50px',
+                height: '50px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--tg-theme-secondary-bg-color)',
+                border: '2px solid var(--tg-theme-bg-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
               <div
-              className='StickerButton'
+                className='StickerButton'
                 ref={userImageRef}
                 style={{
                   height: '40px',
@@ -191,28 +235,57 @@ const AutoStatusApp = memo(() => {
                 }}>
                 <StickerView
                   containerRef={userImageRef}
-                  sticker={stickerSets[0].stickers[0]}
+                  sticker={selectedStickers[0]}
                   size={40}
                   noPlay={false}
                   shouldLoop={true}
                   isSmall
                 />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
+        <div
+            ref={headerRef}
+            className={headerClassName}
+          >
+            <div className="shared-canvas-container">
+              <canvas ref={sharedCanvasHqRef} className="shared-canvas" />
+              {
+                selectedStickers.map((sticker) => (
+                  <div
+                  className='StickerButton'
+                  ref={userImageRef}
+                  style={{
+                    height: '36px',
+                    width: '36px',
+                    position: 'relative'
+                  }}>
+                  <StickerView
+                    containerRef={userImageRef}
+                    sticker={sticker}
+                    size={36}
+                    noPlay={false}
+                    shouldLoop={true}
+                    isSmall
+                  />
+                </div>
+                ))
+              }
+            </div>
+          </div>
       </div>
-      <div className={sliderStyle.durationSliderContainer} ref={sliderRef}>
-        <div className={sliderStyle.durationHeader}>
-          <span className={sliderStyle.durationLabel}>Duration</span>
-          <span className={sliderStyle.durationValue}>{Math.floor(duration / 60)} hours</span>
+      <div className={style.durationSliderContainer} ref={sliderRef}>
+        <div className={style.durationHeader}>
+          <span className={style.durationLabel}>Duration</span>
+          <span className={style.durationValue}>{Math.floor(duration / 60)} hours</span>
         </div>
         <input
           type="range"
           min="10"
           max="1440"
           step="10"
-          className={sliderStyle.slider}
+          className={style.slider}
           value={duration}
           onChange={(e) => {
             const value = Number(e.target.value);
@@ -227,7 +300,7 @@ const AutoStatusApp = memo(() => {
       <div className="sticker-pack" style={{ width: '100%', flexGrow: 1, marginBottom: '16px', padding: '0 16px' }}>
         {renderStickers()}
       </div>
-      <div ref={buttonRef} style={{ marginTop: '8px', padding: '0 16px' }}>
+      <div ref={buttonRef} style={{ marginTop: '8px', marginBottom: '8px', padding: '0 16px' }}>
         <Button
           key="save_button"
           className="Save_Button"

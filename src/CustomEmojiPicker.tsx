@@ -15,7 +15,6 @@ import {
   RECENT_SYMBOL_SET_ID,
   SLIDE_TRANSITION_DURATION,
   STICKER_PICKER_MAX_SHARED_COVERS,
-  STICKER_SIZE_MODAL,
   STICKER_SIZE_PICKER_HEADER,
   TOP_SYMBOL_SET_ID,
 } from './config';
@@ -82,9 +81,6 @@ type StateProps = {
 const HEADER_BUTTON_WIDTH = 2.5 * REM; // px (including margin)
 
 const DEFAULT_ID_PREFIX = 'custom-emoji-set';
-const TOP_REACTIONS_COUNT = 16;
-const RECENT_REACTIONS_COUNT = 32;
-const RECENT_DEFAULT_STATUS_COUNT = 7;
 const FADED_BUTTON_SET_IDS = new Set([RECENT_SYMBOL_SET_ID, FAVORITE_SYMBOL_SET_ID, POPULAR_SYMBOL_SET_ID]);
 const STICKER_SET_IDS_WITH_COVER = new Set([
   RECENT_SYMBOL_SET_ID,
@@ -318,7 +314,6 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
           round
           faded={isFaded}
           color="translucent"
-          // eslint-disable-next-line react/jsx-no-bind
           onClick={() => selectStickerSet(isRecent ? 0 : index)}
         >
           {isRecent ? (
