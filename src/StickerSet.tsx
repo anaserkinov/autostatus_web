@@ -230,9 +230,10 @@ const StickerSet: FC<OwnProps> = ({
 
   const isInstalled = stickerSet.installedDate && !stickerSet.isArchived;
 
-  const canCut = !isInstalled && stickerSet.id !== RECENT_SYMBOL_SET_ID
-    && stickerSet.id !== POPULAR_SYMBOL_SET_ID && stickerSet.id !== EFFECT_EMOJIS_SET_ID
-    && stickerSet.id !== EFFECT_STICKERS_SET_ID && !isChatEmojiSet && !isChatStickerSet;
+  // const canCut = !isInstalled && stickerSet.id !== RECENT_SYMBOL_SET_ID
+  //   && stickerSet.id !== POPULAR_SYMBOL_SET_ID && stickerSet.id !== EFFECT_EMOJIS_SET_ID
+  //   && stickerSet.id !== EFFECT_STICKERS_SET_ID && !isChatEmojiSet && !isChatStickerSet;
+  const canCut = false
 
   const [isCut, , expand] = useFlag(canCut);
   const itemsBeforeCutout = itemsPerRow * 3 - 1;
@@ -246,7 +247,7 @@ const StickerSet: FC<OwnProps> = ({
   const favoriteStickerIdsSet = useMemo(() => (
     favoriteStickers ? new Set(favoriteStickers.map(({ id }) => id)) : undefined
   ), [favoriteStickers]);
-  const withAddSetButton = !shouldHideHeader && !isRecent && isEmoji && !isPopular && !isChatEmojiSet
+  const withAddSetButton = !shouldHideHeader && !isRecent && isEmoji && !isPopular && !isChatEmojiSet && false
     && (!isInstalled || (!isCurrentUserPremium && !isSavedMessages));
   // const addSetButtonText = useMemo(() => {
   //   if (isLocked) {

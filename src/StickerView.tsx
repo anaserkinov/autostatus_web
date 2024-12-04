@@ -22,7 +22,7 @@ import { ApiMediaFormat } from './api/types';
 
 import AnimatedSticker from './AnimatedSticker';
 
-import './StickerView.module.scss';
+import styles from './StickerView.module.scss';
 
 type OwnProps = {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -158,9 +158,9 @@ const StickerView: FC<OwnProps> = ({
         ref={thumbRef}
         src={thumbData}
         className={buildClassName(
-          'thumb',
-          noCrossTransition && 'no-transition',
-          isThumbOpaque && 'thumb-opaque',
+          styles.thumb,
+          noCrossTransition && styles.noTransition,
+          isThumbOpaque && styles.thumbOpaque,
           thumbClassName,
           'sticker-media',
         )}
@@ -175,8 +175,8 @@ const StickerView: FC<OwnProps> = ({
           renderId={renderId}
           size={size}
           className={buildClassName(
-            "media",
-            (noCrossTransition || isThumbOpaque) && "no-transition",
+            styles.media,
+            (noCrossTransition || isThumbOpaque) && styles.noTransition,
             fullMediaClassName,
           )}
           tgsUrl={fullMediaData}
@@ -195,11 +195,7 @@ const StickerView: FC<OwnProps> = ({
       ) : (
         <img
           ref={fullMediaRef as React.RefObject<HTMLImageElement>}
-          className={buildClassName(
-            "media",
-            fullMediaClassName,
-            'sticker-media'
-          )}
+          className={buildClassName(styles.media, fullMediaClassName, 'sticker-media')}
           src={fullMediaData}
           alt={emoji}
           style={filterStyle}

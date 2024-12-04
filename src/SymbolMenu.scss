@@ -45,10 +45,10 @@
   &-main {
     width: 100%;
     height: calc(var(--symbol-menu-height) - var(--symbol-menu-footer-height));
-    max-height: calc(100vh - var(--symbol-menu-footer-height));
+    // max-height: calc(100vh - var(--symbol-menu-footer-height));
 
     @media (max-width: 600px) {
-      max-height: calc(100vh - var(--symbol-menu-footer-height) - env(safe-area-inset-bottom));
+      // max-height: calc(100vh - var(--symbol-menu-footer-height) - env(safe-area-inset-bottom));
     }
   }
 

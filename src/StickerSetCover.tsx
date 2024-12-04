@@ -21,7 +21,7 @@ import useMediaTransition from './hooks/useMediaTransition';
 
 import AnimatedSticker from './AnimatedSticker';
 
-import './StickerSetCover.module.scss';
+import styles from './StickerSetCover.module.scss';
 
 type OwnProps = {
   stickerSet: ApiStickerSet;
@@ -61,8 +61,6 @@ const StickerSetCover: FC<OwnProps> = ({
   const staticMediaData = useMedia(staticHash, !isIntersecting);
 
   const mediaHash = ((hasThumbnail && !shouldFallbackToStatic) || hasAnimatedThumb) && thumbCustomEmojiId;
-  console.log("thumb", thumbCustomEmojiId)
-  console.log("thumb2", mediaHash)
   const mediaData = useMedia(mediaHash, !isIntersecting);
   const isReady = thumbCustomEmojiId || mediaData || staticMediaData;
   const transitionClassNames = useMediaTransitionDeprecated(isReady);
@@ -82,7 +80,7 @@ const StickerSetCover: FC<OwnProps> = ({
   }, [isIntersecting, loadStickers, stickerSet]);
 
   return (
-    <div ref={containerRef} className={buildClassName("root", 'sticker-set-cover')}>
+    <div ref={containerRef} className={buildClassName(styles.root, 'sticker-set-cover')}>
       {isReady ? (
         hasAnimatedThumb ? (
           <AnimatedSticker
@@ -98,7 +96,7 @@ const StickerSetCover: FC<OwnProps> = ({
           <img
             src={mediaData || staticMediaData}
             style={colorFilter}
-            className={buildClassName("image", transitionClassNames)}
+            className={buildClassName(styles.image, transitionClassNames)}
             alt=""
             draggable={false}
           />
