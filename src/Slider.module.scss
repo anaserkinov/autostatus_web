@@ -34,7 +34,7 @@
   background: #dadce0;
   outline: none;
   opacity: 1;
-  margin: 12px 0;
+  margin: 0 0 12px 0;
   cursor: pointer;
 
   &::-webkit-slider-thumb {
@@ -76,8 +76,8 @@
     background: linear-gradient(
       to right,
       var(--tg-theme-button-color) 0%,
-      var(--tg-theme-button-color) var(--slider-percentage, 50%),
-      var(--tg-theme-section-separator-color) var(--slider-percentage, 50%),
+      var(--tg-theme-button-color) var(--slider-percentage, 0%),
+      var(--tg-theme-section-separator-color) var(--slider-percentage, 0%),
       var(--tg-theme-section-separator-color) 100%
     );
   }
@@ -89,8 +89,8 @@
     background: linear-gradient(
       to right,
       var(--tg-theme-button-color) 0%,
-      var(--tg-theme-button-color) var(--slider-percentage, 50%),
-      var(--tg-theme-section-separator-color) var(--slider-percentage, 50%),
+      var(--tg-theme-button-color) var(--slider-percentage, 0%),
+      var(--tg-theme-section-separator-color) var(--slider-percentage, 0%),
       var(--tg-theme-section-separator-color) 100%
     );
   }

@@ -13,13 +13,15 @@ import useLastCallback from './src/hooks/useLastCallback';
 
 import './src/styles/index.scss';
 import sliderStyle from './src/Slider.module.scss';
+import './src/StickerButton.scss';
+
 
 
 (window as any).isCompatTestPassed = true;
 
 const AutoStatusApp = memo(() => {
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
-  const [duration, setDuration] = useState(480); // 8 hours in minutes
+  const [duration, setDuration] = useState(0); // 8 hours in minutes
   const userImageRef = useRef<HTMLDivElement>(null);
   const userContainerRef = useRef<HTMLDivElement>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
@@ -126,7 +128,7 @@ const AutoStatusApp = memo(() => {
       className='picker-tab'
       isStatusPicker={true}
       loadAndPlay={true}
-      isTranslucent = {true}
+      isTranslucent={true}
       onCustomEmojiSelect={handleCustomEmojiSelect}
       customHeight={stickerPackHeight}
     />
@@ -136,44 +138,66 @@ const AutoStatusApp = memo(() => {
     <div className="container" style={{ width: '100%', display: "flex", flexDirection: "column", justifyContent: "space-between", height: "100vh" }}>
       <div ref={userContainerRef} className="user-image-container" style={{
         background: 'var(--tg-theme-bg-color)',
-        padding: '16px 20px',
+        padding: '8px 20px 16px 20px',
         borderRadius: '12px',
         margin: '8px auto',
         width: '90%',
-        maxWidth: '400px'
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '10px'
       }}>
-        <div className="user-image" ref={userImageRef} style={{
-          backgroundImage: `url(${baseUrl}/download/thumbnails/image.jpg)`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          width: '150px',
-          height: '150px',
-          borderRadius: '50%',
-          margin: '0 auto',
-          position: 'relative',
-          overflow: 'visible'
+        <div className="user-name" style={{
+          color: 'var(--tg-theme-text-color)',
+          fontSize: '18px',
+          fontWeight: 500
         }}>
-          <div style={{
-            position: 'absolute',
-            bottom: 0,
-            right: 0,
-            width: '50px',
-            height: '50px',
+          {window.Telegram.WebApp.initDataUnsafe.user?.first_name || 'User'}
+        </div>
+        <div className="user-image"
+          style={{
+            backgroundImage: `url(${baseUrl}/download/thumbnails/image.jpg)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            width: '150px',
+            height: '150px',
             borderRadius: '50%',
-            backgroundColor: 'var(--tg-theme-secondary-bg-color)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px solid var(--tg-theme-bg-color)'
+            margin: '0 auto',
+            position: 'relative',
+            overflow: 'visible'
           }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              width: '50px',
+              height: '50px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--tg-theme-secondary-bg-color)',
+              border: '2px solid var(--tg-theme-bg-color)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
             {stickerSets[0]?.stickers[0] && (
-              <StickerView
-                containerRef={userImageRef}
-                sticker={stickerSets[0].stickers[0]}
-                size={40}
-                noPlay={false}
-                isSmall
-              />
+              <div
+              className='StickerButton'
+                ref={userImageRef}
+                style={{
+                  height: '40px',
+                  width: '40px',
+                  position: 'relative'
+                }}>
+                <StickerView
+                  containerRef={userImageRef}
+                  sticker={stickerSets[0].stickers[0]}
+                  size={40}
+                  noPlay={false}
+                  shouldLoop={true}
+                  isSmall
+                />
+              </div>
             )}
           </div>
         </div>
@@ -200,10 +224,10 @@ const AutoStatusApp = memo(() => {
           style={{ '--slider-percentage': `${((duration - 10) / (1440 - 10)) * 100}%` } as React.CSSProperties}
         />
       </div>
-      <div className="sticker-pack" style={{ width: '100%', flexGrow: 1 }}>
+      <div className="sticker-pack" style={{ width: '100%', flexGrow: 1, marginBottom: '16px', padding: '0 16px' }}>
         {renderStickers()}
       </div>
-      <div ref={buttonRef}>
+      <div ref={buttonRef} style={{ marginTop: '8px', padding: '0 16px' }}>
         <Button
           key="save_button"
           className="Save_Button"
