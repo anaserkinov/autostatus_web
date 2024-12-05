@@ -23,7 +23,7 @@ import style from './src/index.module.scss';
 
 const AutoStatusApp = memo(() => {
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
-  const [duration, setDuration] = useState(0); 
+  const [duration, setDuration] = useState(10);
   const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
   const [stickerPackHeight, setStickerPackHeight] = useState(235)
   const userImageRef = useRef<HTMLDivElement>(null);
@@ -34,7 +34,7 @@ const AutoStatusApp = memo(() => {
     const height = window.innerHeight - ((userContainerRef.current?.clientHeight ?? 0) + (sliderRef.current?.clientHeight ?? 0)) - 24
     console.log("height changed", height)
     setStickerPackHeight(height)
-  }, [userContainerRef.current?.clientHeight, sliderRef.current?.clientHeight, ])
+  }, [userContainerRef.current?.clientHeight, sliderRef.current?.clientHeight,])
 
 
   window.Telegram.WebApp.MainButton.text = "Save";
@@ -142,8 +142,6 @@ const AutoStatusApp = memo(() => {
       return null;
     }
 
-    console.log("height", stickerPackHeight)
-
     return <CustomEmojiPicker
       className='picker-tab'
       isStatusPicker={true}
@@ -180,6 +178,76 @@ const AutoStatusApp = memo(() => {
     'no-scrollbar'
   );
 
+  const minuteSwitch = () => {
+    let value = 10
+    switch (duration) {
+      case 5:
+        value = 0
+        break
+      case 10:
+        value = 5
+        break
+      case 15:
+        value = 10
+        break
+      case 20:
+        value = 15
+        break
+      case 25:
+        value = 20
+        break
+      case 30:
+        value = 25
+        break
+      case 45:
+        value = 30
+        break
+      case 60:
+        value = 35
+        break
+      case 120:
+        value = 40
+        break
+      case 180:
+        value = 45
+        break
+      case 240:
+        value = 50
+        break
+      case 300:
+        value = 55
+        break
+      case 360:
+        value = 60
+        break
+      case 540:
+        value = 65
+        break
+      case 720:
+        value = 70
+        break
+      case 960:
+        value = 75
+        break
+      case 1080:
+        value = 80
+        break
+      case 1200:
+        value = 85
+        break
+      case 1440:
+        value = 90
+        break
+      case 2160:
+        value = 95
+        break
+      case 2880:
+        value = 100
+        break
+    }
+    return value
+  }
+
   return (
     <div className={style.container}>
       <div ref={userContainerRef} className={style.userContainer}>
@@ -211,52 +279,120 @@ const AutoStatusApp = memo(() => {
             ref={headerRef}
             className={headerClassName}
           > */}
-            <div className={style.selectedStickers}>
-              <canvas ref={sharedCanvasHqRef} className="shared-canvas" />
-              {
-                selectedStickers.map((sticker) => (
-                  <div
-                  className='StickerButton'
-                  ref={userImageRef}
-                  style={{
-                    height: '36px',
-                    width: '36px',
-                    position: 'relative'
-                  }}>
-                  <StickerView
-                    containerRef={userImageRef}
-                    sticker={sticker}
-                    size={36}
-                    noPlay={false}
-                    shouldLoop={true}
-                    isSmall
-                  />
-                </div>
-                ))
-              }
-            </div>
-          {/* </div> */}
+        <div className={style.selectedStickers}>
+          <canvas ref={sharedCanvasHqRef} className="shared-canvas" />
+          {
+            selectedStickers.map((sticker) => (
+              <div
+                className='StickerButton'
+                ref={userImageRef}
+                style={{
+                  height: '36px',
+                  width: '36px',
+                  position: 'relative'
+                }}>
+                <StickerView
+                  containerRef={userImageRef}
+                  sticker={sticker}
+                  size={36}
+                  noPlay={false}
+                  shouldLoop={true}
+                  isSmall
+                />
+              </div>
+            ))
+          }
+        </div>
+        {/* </div> */}
       </div>
       <div className={style.durationSliderContainer} ref={sliderRef}>
         <div className={style.durationHeader}>
           <span className={style.durationLabel}>Duration</span>
-          <span className={style.durationValue}>{Math.floor(duration / 60)} hours</span>
+          <span className={style.durationValue}>
+            {
+              duration < 60 ? duration + " minutes" : duration == 60 ? "1 hour" : (duration / 60) + " hours"
+            }
+          </span>
         </div>
         <input
           type="range"
-          min="10"
-          max="1440"
-          step="10"
+          min="0"
+          max="100"
+          step="5"
           className={style.slider}
-          value={duration}
+          value={minuteSwitch()}
           onChange={(e) => {
             const value = Number(e.target.value);
-            setDuration(value);
-            // Update the progress bar color
-            const percentage = ((value - 10) / (1440 - 10)) * 100;
-            e.target.style.setProperty('--slider-percentage', `${percentage}%`);
+            let minute = 10
+            switch (value) {
+              case 0:
+                minute = 5
+                break
+              case 5:
+                minute = 10
+                break
+              case 10:
+                minute = 15
+                break
+              case 15:
+                minute = 20
+                break
+              case 20:
+                minute = 25
+                break
+              case 25:
+                minute = 30
+                break
+              case 30:
+                minute = 45
+                break
+              case 35:
+                minute = 60
+                break
+              case 40:
+                minute = 120
+                break
+              case 45:
+                minute = 180
+                break
+              case 50:
+                minute = 240
+                break
+              case 55:
+                minute = 300
+                break
+              case 60:
+                minute = 360
+                break
+              case 65:
+                minute = 540
+                break
+              case 70:
+                minute = 720
+                break
+              case 75:
+                minute = 960
+                break
+              case 80:
+                minute = 1080
+                break
+              case 85:
+                minute = 1200
+                break
+              case 90:
+                minute = 1440
+                break
+              case 95:
+                minute = 2160
+                break
+              case 100:
+                minute = 2880
+                break
+            }
+            setDuration(minute);
+            e.target.style.setProperty('--slider-percentage', `${value}%`);
           }}
-          style={{ '--slider-percentage': `${((duration - 10) / (1440 - 10)) * 100}%` } as React.CSSProperties}
+          style={{ '--slider-percentage': `${minuteSwitch()}%` } as React.CSSProperties}
         />
       </div>
       <div className={style.stickerPack} style={{ width: '100%', flexGrow: 1, marginBottom: '16px', padding: '0 16px' }}>

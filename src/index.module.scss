@@ -98,8 +98,8 @@
     background: linear-gradient(
       to right,
       var(--tg-theme-button-color) 0%,
-      var(--tg-theme-button-color) var(--slider-percentage, 0%),
-      var(--tg-theme-section-separator-color) var(--slider-percentage, 0%),
+      var(--tg-theme-button-color) var(--slider-percentage, 5%),
+      var(--tg-theme-section-separator-color) var(--slider-percentage, 5%),
       var(--tg-theme-section-separator-color) 100%
     );
   }
