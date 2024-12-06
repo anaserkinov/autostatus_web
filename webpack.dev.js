@@ -10,8 +10,8 @@ const CSP = `
   connect-src 'self' wss://*.web.telegram.org blob: http: https: ${APP_ENV === 'development' ? 'wss:' : ''};
   script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://t.me/_websync_ https://telegram.me/_websync_ https://telegram.org;
   style-src 'self' 'unsafe-inline';
-  img-src 'self' https://autostatus.nashruz.uz https://overly-boss-kangaroo.ngrok-free.app blob: data:;
-  media-src 'self' blob: data: https://autostatus.nashruz.uz https://overly-boss-kangaroo.ngrok-free.app;
+  img-src 'self' blob: data: https://t.me https://autostatus.nashruz.uz https://engaging-flying-hornet.ngrok-free.app;
+  media-src 'self' blob: data: https://autostatus.nashruz.uz https://engaging-flying-hornet.ngrok-free.app;
   object-src 'none';
   frame-src http: https:;
   base-uri 'none';

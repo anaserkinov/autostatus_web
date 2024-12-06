@@ -7,12 +7,15 @@ import { getGlobal, setGlobal } from './src/global';
 import { memo, useRef, useState, useEffect, useCallback } from './src/teact/teact';
 import StickerView from './src/StickerView';
 import CustomEmojiPicker from './src/CustomEmojiPicker'
-import Button from './src/Button'
 import { ApiSticker, ApiStickerSet } from './src/api/types'
 import animateHorizontalScroll from './src/util/animateHorizontalScroll';
 import buildClassName from './src/util/buildClassName';
 import useHorizontalScroll from './src/hooks/useHorizontalScroll';
 import useAppLayout from './src/hooks/useAppLayout';
+
+import {
+  DEBUG,
+} from './src/config';
 
 import './src/styles/index.scss';
 import pickerStyles from './src/StickerPicker.module.scss';
@@ -58,9 +61,10 @@ let initData = ''
 
 const AutoStatusApp = memo(() => {
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
-  const [duration, setDuration] = useState(10);
   const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
+  const [duration, setDuration] = useState(10);
   const [mainButtonEnabled, setMainButtonEnabled] = useState<number>(0);
+  
   const [stickerPackHeight, setStickerPackHeight] = useState(235)
   const userImageRef = useRef<HTMLDivElement>(null);
   const userContainerRef = useRef<HTMLDivElement>(null)
@@ -175,13 +179,15 @@ const AutoStatusApp = memo(() => {
   }, []);
 
   useEffect(() => {
+    console.log("mainButtonCallback", mainButtonCallback)
     if (mainButtonCallback)
       webApp.offEvent("mainButtonClicked", mainButtonCallback)
 
     const save = async (stikcers: ApiSticker[]) => {
+      console.log("list 2", stikcers)
+
       try {
         const user = webApp.initDataUnsafe.user
-        console.log(stikcers)
         if (user != null) {
           const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
             method: 'POST',
@@ -248,8 +254,11 @@ const AutoStatusApp = memo(() => {
       }
     }
 
+    console.log("list 1", selectedStickers)
     mainButtonCallback = async () => {
       webApp.MainButton.showProgress(false)
+
+      console.log("list 2", selectedStickers)
 
       if (selectedStickers.length > 0) {
         const firstEmoji = selectedStickers[0];
@@ -412,7 +421,8 @@ const AutoStatusApp = memo(() => {
         </div>
         <div className={style.userImage}
           style={{
-            backgroundImage: `url(${baseUrl}/download/thumbnails/image.jpg)`
+            backgroundImage: 
+                 DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
           }}>
           {selectedStickers.length > 0 && (
             <div className={style.stickerContainer}>
