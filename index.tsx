@@ -60,11 +60,12 @@ let mainButtonCallback;
 let initData = ''
 
 const AutoStatusApp = memo(() => {
+  console.log("render")
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
   const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
   const [duration, setDuration] = useState(10);
   const [mainButtonEnabled, setMainButtonEnabled] = useState<number>(0);
-  
+
   const [stickerPackHeight, setStickerPackHeight] = useState(235)
   const userImageRef = useRef<HTMLDivElement>(null);
   const userContainerRef = useRef<HTMLDivElement>(null)
@@ -179,86 +180,81 @@ const AutoStatusApp = memo(() => {
   }, []);
 
   useEffect(() => {
-    console.log("mainButtonCallback", mainButtonCallback)
-    if (mainButtonCallback)
-      webApp.offEvent("mainButtonClicked", mainButtonCallback)
-
-    const save = async (stikcers: ApiSticker[]) => {
-      console.log("list 2", stikcers)
-
-      try {
-        const user = webApp.initDataUnsafe.user
-        if (user != null) {
-          const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
-            method: 'POST',
-            headers: {
-              'initData': `${initData}`,
-              'content-type': 'application/json'
-            },
-            body: JSON.stringify(
-              {
-                'firstName': `${user.first_name}`,
-                'username': `${user.username}`,
-                'languageCode': `${user.language_code}`,
-                'isPremium': user.is_premium,
-                'statusUpdateInterval': duration,
-                'stickers': stikcers.map(sticker => sticker.customEmojiId)
-              }
-            )
-          })
-          if (resp.status == 200) {
-            webApp.HapticFeedback.notificationOccurred("success")
-            webApp.showPopup(
-              {
-                message: "Saved",
-                buttons: [
-                  {
-                    type: 'ok'
-                  }
-                ]
-              }
-            )
-          } else {
-            webApp.HapticFeedback.notificationOccurred("error")
-            webApp.showPopup(
-              {
-                message: "Error",
-                buttons: [
-                  {
-                    type: 'ok'
-                  }
-                ]
-              }
-            )
-          }
-          return resp.status == 200
-        }
-
-        return false
-      } catch (e) {
-        console.error('Error emojiSet', e);
-        webApp.HapticFeedback.notificationOccurred("error")
-        webApp.showPopup(
-          {
-            message: "Error",
-            buttons: [
-              {
-                type: 'ok'
-              }
-            ]
-          }
-        )
-        return false
-      } finally {
-        webApp.MainButton.hideProgress()
-      }
-    }
-
-    console.log("list 1", selectedStickers)
+    const callback = mainButtonCallback
+    if(callback)
+      webApp.offEvent("mainButtonClicked", callback);
     mainButtonCallback = async () => {
-      webApp.MainButton.showProgress(false)
+      const save = async (stikcers: ApiSticker[]) => {
+        console.log("save", stikcers)
+        try {
+          const user = webApp.initDataUnsafe.user
+          if (user != null) {
+            const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
+              method: 'POST',
+              headers: {
+                'initData': `${initData}`,
+                'content-type': 'application/json'
+              },
+              body: JSON.stringify(
+                {
+                  'firstName': `${user.first_name}`,
+                  'username': `${user.username}`,
+                  'languageCode': `${user.language_code}`,
+                  'isPremium': user.is_premium,
+                  'statusUpdateInterval': duration,
+                  'stickers': stikcers.map(sticker => sticker.customEmojiId)
+                }
+              )
+            })
+            if (resp.status == 200) {
+              webApp.HapticFeedback.notificationOccurred("success")
+              webApp.showPopup(
+                {
+                  message: "Saved",
+                  buttons: [
+                    {
+                      type: 'ok'
+                    }
+                  ]
+                }
+              )
+            } else {
+              webApp.HapticFeedback.notificationOccurred("error")
+              webApp.showPopup(
+                {
+                  message: "Error",
+                  buttons: [
+                    {
+                      type: 'ok'
+                    }
+                  ]
+                }
+              )
+            }
+            return resp.status == 200
+          }
 
-      console.log("list 2", selectedStickers)
+          return false
+        } catch (e) {
+          console.error('Error emojiSet', e);
+          webApp.HapticFeedback.notificationOccurred("error")
+          webApp.showPopup(
+            {
+              message: "Error",
+              buttons: [
+                {
+                  type: 'ok'
+                }
+              ]
+            }
+          )
+          return false
+        } finally {
+          webApp.MainButton.hideProgress()
+        }
+      }
+
+      webApp.MainButton.showProgress(false)
 
       if (selectedStickers.length > 0) {
         const firstEmoji = selectedStickers[0];
@@ -280,8 +276,12 @@ const AutoStatusApp = memo(() => {
       }
     }
 
-    webApp.onEvent("mainButtonClicked", mainButtonCallback)
-  }, [mainButtonEnabled, duration])
+    webApp.onEvent("mainButtonClicked", mainButtonCallback);
+
+    return () => {
+      webApp.offEvent("mainButtonClicked", mainButtonCallback);
+    }
+  }, [mainButtonEnabled, duration]);
 
 
 
@@ -421,8 +421,8 @@ const AutoStatusApp = memo(() => {
         </div>
         <div className={style.userImage}
           style={{
-            backgroundImage: 
-                 DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
+            backgroundImage:
+              DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
           }}>
           {selectedStickers.length > 0 && (
             <div className={style.stickerContainer}>
