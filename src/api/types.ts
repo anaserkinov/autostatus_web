@@ -16,6 +16,7 @@ export interface ApiThumbnail extends ApiDimensions {
 export interface ApiSticker {
   mediaType: 'sticker';
   id: string;
+  customEmojiId: string,
   emoji?: string;
   isCustomEmoji?: boolean;
   isLottie: boolean;

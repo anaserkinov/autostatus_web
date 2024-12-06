@@ -700,10 +700,10 @@
         var requestData = WebAppEmojiStatusAccessRequested;
         WebAppEmojiStatusAccessRequested = false;
         if (requestData.callback) {
-          requestData.callback(eventData.status == 'allowed');
+          requestData.callback(eventData?.status ?? "cancelled" == 'allowed');
         }
         receiveWebViewEvent('emojiStatusAccessRequested', {
-          status: eventData.status
+          status: eventData?.status ?? cancelled
         });
       }
     }

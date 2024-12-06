@@ -2,8 +2,10 @@ import type { FC } from './teact/teact';
 import React, { memo, useMemo, useRef } from './teact/teact';
 
 import type { ApiSticker } from './api/types';
+import {ApiMediaFormat} from './api/types';
 import type { ObserveFn } from './hooks/useIntersectionObserver';
 
+import { getStickerMediaHash } from './global/helpers';
 import buildClassName from './util/buildClassName';
 import * as mediaLoader from './util/mediaLoader';
 import { IS_ANDROID, IS_IOS, IS_WEBM_SUPPORTED } from './util/windowEnvironment';
@@ -18,7 +20,6 @@ import useMountAfterHeavyAnimation from './hooks/useMountAfterHeavyAnimation';
 import useThumbnail from './hooks/useThumbnail';
 import useUniqueId from './hooks/useUniqueId';
 import useDevicePixelRatio from './hooks/window/useDevicePixelRatio';
-import { ApiMediaFormat } from './api/types';
 
 import AnimatedSticker from './AnimatedSticker';
 
@@ -35,7 +36,7 @@ type OwnProps = {
   customColor?: string;
   loopLimit?: number;
   shouldLoop?: boolean;
-  shouldPreloadPreview?: boolean;
+  shouldPreloadPrevie?: boolean;
   forceAlways?: boolean;
   forceOnHeavyAnimation?: boolean;
   observeIntersectionForLoading?: ObserveFn;
@@ -64,7 +65,7 @@ const StickerView: FC<OwnProps> = ({
   customColor,
   loopLimit,
   shouldLoop = false,
-  shouldPreloadPreview,
+  shouldPreloadPrevie,
   forceAlways,
   forceOnHeavyAnimation,
   observeIntersectionForLoading,
@@ -78,6 +79,7 @@ const StickerView: FC<OwnProps> = ({
   onVideoEnded,
   onAnimatedStickerLoop,
 }) => {
+  const shouldPreloadPreview = false;
   const {
     id, isLottie, emoji,
   } = sticker;
@@ -88,8 +90,7 @@ const StickerView: FC<OwnProps> = ({
   );
   const isVideo = sticker.isVideo;
   const isStatic = !isLottie && !isVideo;
-  // const previewMediaHash = getStickerMediaHash(sticker, 'preview');
-  const previewMediaHash = sticker.thumbnail?.dataUri ?? '';
+  const previewMediaHash = getStickerMediaHash(sticker, 'preview');
 
   const dpr = useDevicePixelRatio();
 
@@ -118,13 +119,12 @@ const StickerView: FC<OwnProps> = ({
   const shouldSkipFullMedia = Boolean(shouldForcePreview || (
     fullMediaHash === previewMediaHash && (cachedPreview || previewMediaData)
   ));
-  const fullMediaData = useMedia(fullMediaHash || sticker.id, !shouldLoad || shouldSkipFullMedia);
+  const fullMediaData = useMedia(fullMediaHash || id, !shouldLoad || shouldSkipFullMedia);
   const shouldRenderFullMedia = isReadyToMountFullMedia && !shouldSkipFullMedia && fullMediaData && !isVideoBroken;
   const [isPlayerReady, markPlayerReady] = useFlag();
   const isFullMediaReady = shouldRenderFullMedia && (isStatic || isPlayerReady);
 
   const thumbDataUri = useThumbnail(sticker);
-
   // const thumbData = cachedPreview || previewMediaData || thumbDataUri;
   const thumbData = cachedPreview || previewMediaData || useMedia(
     thumbDataUri,
@@ -142,6 +142,9 @@ const StickerView: FC<OwnProps> = ({
   });
 
   const coords = useCoordsInSharedCanvas(containerRef, sharedCanvasRef);
+
+  // Preload preview for Message Input and local message
+  // useMedia(previewMediaHash, !shouldLoad || !shouldPreloadPreview);
 
   const randomIdPrefix = useUniqueId();
   const renderId = useMemo(() => ([

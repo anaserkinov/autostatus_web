@@ -23,7 +23,7 @@
   },
     "include": [
       "src",
-      "webpack.config.js",
+      "webpack.common.js",
       "babel.config.js"
     ]
   }

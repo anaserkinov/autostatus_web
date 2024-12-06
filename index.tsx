@@ -2,8 +2,9 @@ import './src/util/handleError';
 
 import React from './src/teact/teact';
 import TeactDOM from './src/teact/teact-dom';
+
 import { getGlobal, setGlobal } from './src/global';
-import { memo, useRef, useState, useEffect } from './src/teact/teact';
+import { memo, useRef, useState, useEffect, useCallback } from './src/teact/teact';
 import StickerView from './src/StickerView';
 import CustomEmojiPicker from './src/CustomEmojiPicker'
 import Button from './src/Button'
@@ -18,13 +19,48 @@ import pickerStyles from './src/StickerPicker.module.scss';
 import './src/StickerButton.scss';
 import style from './src/index.module.scss';
 
+export interface ApiUser {
+  id: number,
+  firstName: string;
+  lastname?: string
+  username?: string;
+  statusUpdateInterval?: number
+  stickers: ApiSticker[]
+}
 
 (window as any).isCompatTestPassed = true;
+
+const baseUrl = 'https://autostatus.nashruz.uz/app';
+
+const hasEmojiAccess = async (customEmojiId: string): Promise<boolean> => {
+  try {
+    const resp = await fetch('https://autostatus.nashruz.uz/app/emojiSet', {
+      method: 'POST',
+      headers: {
+        'initData': `${initData}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(
+        {
+          'customEmojiId': `${customEmojiId}`
+        }
+      )
+    })
+    return (await resp.json()).result == true
+  } catch (e) {
+    console.error('Error emojiSet', e);
+    return false
+  }
+}
+
+let mainButtonCallback;
+let initData = ''
 
 const AutoStatusApp = memo(() => {
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
   const [duration, setDuration] = useState(10);
   const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
+  const [mainButtonEnabled, setMainButtonEnabled] = useState<number>(0);
   const [stickerPackHeight, setStickerPackHeight] = useState(235)
   const userImageRef = useRef<HTMLDivElement>(null);
   const userContainerRef = useRef<HTMLDivElement>(null)
@@ -32,18 +68,42 @@ const AutoStatusApp = memo(() => {
 
   useEffect(() => {
     const height = window.innerHeight - ((userContainerRef.current?.clientHeight ?? 0) + (sliderRef.current?.clientHeight ?? 0)) - 24
-    console.log("height changed", height)
     setStickerPackHeight(height)
   }, [userContainerRef.current?.clientHeight, sliderRef.current?.clientHeight,])
 
 
-  window.Telegram.WebApp.MainButton.text = "Save";
-  window.Telegram.WebApp.MainButton.show();
+  const webApp = window.Telegram.WebApp;
+  initData = webApp.initData || '';
+
+  webApp.MainButton.text = "Save";
+  webApp.MainButton.show();
 
   useEffect(() => {
-    window.Telegram.WebApp.ready();
+    webApp.ready();
 
-    const initData = window.Telegram.WebApp.initData || '';
+    fetch('https://autostatus.nashruz.uz/app/user', {
+      headers: {
+        'initData': `${initData}`
+      }
+    })
+      .then(response => response.json())
+      .then(data => {
+        const processedData = data.result;
+        processedData.stickers = processedData.stickers.map(sticker => ({
+          ...sticker,
+          id: `${baseUrl}/download/${sticker.id}`,
+          thumbnail: sticker.thumbnail ? {
+            dataUri: `${baseUrl}/download/${sticker.thumbnail.dataUri}`
+          } : undefined,
+        }));
+
+        setSelectedStickers(processedData.stickers)
+        setMainButtonEnabled(processedData.stickers.length)
+        setDuration(Math.max(processedData.statusUpdateInterval ?? 10, 10))
+      })
+      .catch(error => {
+        console.error('Error fetching sticker sets:', error);
+      });
 
     fetch('https://autostatus.nashruz.uz/app/stickers', {
       headers: {
@@ -114,26 +174,120 @@ const AutoStatusApp = memo(() => {
       });
   }, []);
 
-  const baseUrl = 'https://autostatus.nashruz.uz/app';
+  useEffect(() => {
+    if (mainButtonCallback)
+      webApp.offEvent("mainButtonClicked", mainButtonCallback)
+
+    const save = async (stikcers: ApiSticker[]) => {
+      try {
+        const user = webApp.initDataUnsafe.user
+        console.log(stikcers)
+        if (user != null) {
+          const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
+            method: 'POST',
+            headers: {
+              'initData': `${initData}`,
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify(
+              {
+                'firstName': `${user.first_name}`,
+                'username': `${user.username}`,
+                'languageCode': `${user.language_code}`,
+                'isPremium': user.is_premium,
+                'statusUpdateInterval': duration,
+                'stickers': stikcers.map(sticker => sticker.customEmojiId)
+              }
+            )
+          })
+          if (resp.status == 200) {
+            webApp.HapticFeedback.notificationOccurred("success")
+            webApp.showPopup(
+              {
+                message: "Saved",
+                buttons: [
+                  {
+                    type: 'ok'
+                  }
+                ]
+              }
+            )
+          } else {
+            webApp.HapticFeedback.notificationOccurred("error")
+            webApp.showPopup(
+              {
+                message: "Error",
+                buttons: [
+                  {
+                    type: 'ok'
+                  }
+                ]
+              }
+            )
+          }
+          return resp.status == 200
+        }
+
+        return false
+      } catch (e) {
+        console.error('Error emojiSet', e);
+        webApp.HapticFeedback.notificationOccurred("error")
+        webApp.showPopup(
+          {
+            message: "Error",
+            buttons: [
+              {
+                type: 'ok'
+              }
+            ]
+          }
+        )
+        return false
+      } finally {
+        webApp.MainButton.hideProgress()
+      }
+    }
+
+    mainButtonCallback = async () => {
+      webApp.MainButton.showProgress(false)
+
+      if (selectedStickers.length > 0) {
+        const firstEmoji = selectedStickers[0];
+        const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
+
+        if (hasAccess) {
+          await save(selectedStickers)
+        } else {
+          webApp.requestEmojiStatusAccess(async (value: boolean) => {
+            const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
+            if (hasAccess)
+              await save(selectedStickers)
+            else
+              webApp.MainButton.hideProgress()
+          })
+        }
+      } else {
+        await save(selectedStickers)
+      }
+    }
+
+    webApp.onEvent("mainButtonClicked", mainButtonCallback)
+  }, [mainButtonEnabled, duration])
+
+
 
   const handleCustomEmojiSelect = (sticker: ApiSticker) => {
     setSelectedStickers(prevStickers => {
-      // If sticker already exists, remove it (toggle behavior)
       const existingIndex = prevStickers.findIndex(s => s.id === sticker.id);
       if (existingIndex !== -1) {
         const newStickers = [...prevStickers];
         newStickers.splice(existingIndex, 1);
+        setMainButtonEnabled(newStickers.length)
         return newStickers;
       }
-      // Add new sticker
-      return [...prevStickers, sticker];
-    });
 
-    setStickerSets(prevSets => {
-      if (!prevSets.length) {
-        return [{ id: 'selected', title: 'Selected', stickers: [sticker] }];
-      }
-      return [{ ...prevSets[0], stickers: [sticker] }];
+      setMainButtonEnabled(prevStickers.length + 1)
+      return [...prevStickers, sticker];
     });
   };
 
@@ -146,7 +300,7 @@ const AutoStatusApp = memo(() => {
       className='picker-tab'
       isStatusPicker={true}
       loadAndPlay={true}
-      isTranslucent={true}
+      isTranslucent={false}
       selectedReactionIds={selectedStickers.map(s => s.id)}
       onCustomEmojiSelect={handleCustomEmojiSelect}
       customHeight={stickerPackHeight}
@@ -173,6 +327,8 @@ const AutoStatusApp = memo(() => {
 
     animateHorizontalScroll(header, newLeft);
   }, [activeSetIndex]);
+
+
   const headerClassName = buildClassName(
     pickerStyles.header,
     'no-scrollbar'
@@ -252,7 +408,7 @@ const AutoStatusApp = memo(() => {
     <div className={style.container}>
       <div ref={userContainerRef} className={style.userContainer}>
         <div className={style.userName}>
-          {window.Telegram.WebApp.initDataUnsafe.user?.first_name || 'User'}
+          {webApp.initDataUnsafe.user?.first_name || 'User'}
         </div>
         <div className={style.userImage}
           style={{

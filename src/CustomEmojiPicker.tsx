@@ -297,7 +297,7 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
     );
 
     const withSharedCanvas = index < STICKER_PICKER_MAX_SHARED_COVERS;
-    const isHq = true
+    const isHq = false
 
     if (stickerSet.id === TOP_SYMBOL_SET_ID) {
       return undefined;

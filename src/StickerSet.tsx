@@ -355,7 +355,7 @@ const StickerSet: FC<OwnProps> = ({
         {shouldRender && stickerSet.stickers?.slice(0, isCut ? itemsBeforeCutout : stickerSet.stickers.length)
           .map((sticker, i) => {
             // const isHqEmoji = (isRecent || isFavorite) && selectIsAlwaysHighPriorityEmoji(getGlobal(), sticker.stickerSetInfo);
-            const isHqEmoji = true
+            const isHqEmoji = false
             const canvasRef = (canCut && i >= itemsBeforeCutout) || isHqEmoji
               ? sharedCanvasHqRef
               : sharedCanvasRef;
