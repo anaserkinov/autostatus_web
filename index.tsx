@@ -63,17 +63,126 @@ const AutoStatusApp = memo(() => {
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
   const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
   const [duration, setDuration] = useState(10);
+  const [mainButtonEnabled, setMainButtonEnabled] = useState<number>(0);
 
   const [stickerPackHeight, setStickerPackHeight] = useState(235)
   const userImageRef = useRef<HTMLDivElement>(null);
   const userContainerRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
+  const sharedCanvasHqRef = useRef<HTMLCanvasElement>(null)
+
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  const handleCustomEmojiSelect = useCallback((sticker: ApiSticker) => {
+    if (isSelecting) return;
+    setIsSelecting(true);
+    
+    setSelectedStickers(prevStickers => {
+      const existingIndex = prevStickers.findIndex(s => s.id === sticker.id);
+      if (existingIndex !== -1) {
+        return prevStickers.filter(s => s.id !== sticker.id);
+      }
+      return [...prevStickers, sticker];
+    });
+
+    // Reset selection lock after a short delay
+    setTimeout(() => {
+      setIsSelecting(false);
+    }, 100);
+  }, [isSelecting]);
+
+  const save = useCallback(async (stickers: ApiSticker[]) => {
+    try {
+      const user = webApp.initDataUnsafe.user
+      if (user != null) {
+        webApp.MainButton.showProgress(false)
+        const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
+          method: 'POST',
+          headers: {
+            'initData': `${initData}`,
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            'firstName': `${user.first_name}`,
+            'username': `${user.username}`,
+            'languageCode': `${user.language_code}`,
+            'isPremium': user.is_premium,
+            'statusUpdateInterval': duration,
+            'currentEmojiId': stickers.length == 0 ? null : stickers[0].customEmojiId,
+            'stickers': stickers.map(sticker => sticker.customEmojiId)
+          })
+        })
+
+        try {
+          if (resp.status === 200) {
+            webApp.showPopup({
+              message: "Saved",
+              buttons: [{ type: 'ok', id: 'ok' }]
+            })
+          } else {
+            webApp.showPopup({
+              message: "Error",
+              buttons: [{ type: 'ok', id: 'ok' }]
+            })
+          }
+        } catch (e) {
+          console.error('Popup error:', e);
+        }
+
+        return resp.status === 200
+      }
+      return false
+    } catch (e) {
+      console.error('Save error:', e);
+      try {
+        webApp.showPopup({
+          message: "Error",
+          buttons: [{ type: 'ok', id: 'ok' }]
+        })
+      } catch (e) {
+        console.error('Popup error:', e);
+      }
+      return false
+    } finally {
+      webApp.MainButton.hideProgress()
+    }
+  }, [duration]);
+
+  const handleMainButtonClick = useCallback(async () => {
+    if (selectedStickers.length > 0) {
+      const firstEmoji = selectedStickers[0];
+      const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
+
+      if (hasAccess) {
+        await save(selectedStickers)
+      } else {
+        webApp.requestEmojiStatusAccess(async (value: boolean) => {
+          const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
+          if (hasAccess) {
+            await save(selectedStickers)
+          } else {
+            webApp.MainButton.hideProgress()
+          }
+        })
+      }
+    } else {
+      await save(selectedStickers)
+    }
+  }, [selectedStickers, save]);
+
+  useEffect(() => {
+    const handler = handleMainButtonClick;
+    webApp.onEvent("mainButtonClicked", handler);
+    return () => {
+      webApp.offEvent("mainButtonClicked", handler);
+    }
+  }, [handleMainButtonClick]);
 
   useEffect(() => {
     const height = window.innerHeight - ((userContainerRef.current?.clientHeight ?? 0) + (sliderRef.current?.clientHeight ?? 0)) - 24
     setStickerPackHeight(height)
   }, [userContainerRef.current?.clientHeight, sliderRef.current?.clientHeight,])
-
 
   const webApp = window.Telegram.WebApp;
   initData = webApp.initData || '';
@@ -176,123 +285,6 @@ const AutoStatusApp = memo(() => {
       });
   }, []);
 
-
-  const save = useCallback(async (stickers: ApiSticker[]) => {
-    try {
-      const user = webApp.initDataUnsafe.user
-      if (user != null) {
-        const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
-          method: 'POST',
-          headers: {
-            'initData': `${initData}`,
-            'content-type': 'application/json'
-          },
-          body: JSON.stringify(
-            {
-              'firstName': `${user.first_name}`,
-              'username': `${user.username}`,
-              'languageCode': `${user.language_code}`,
-              'isPremium': user.is_premium ?? false,
-              'statusUpdateInterval': duration,
-              'stickers': stickers.map(sticker => sticker.customEmojiId)
-            }
-          )
-        })
-        if (resp.status == 200) {
-          webApp.showPopup(
-            {
-              message: "Saved",
-              buttons: [
-                {
-                  type: 'ok',
-                  id: 'ok'
-                }
-              ]
-            }
-          )
-        } else {
-          webApp.showPopup(
-            {
-              message: "Error",
-              buttons: [
-                {
-                  type: 'ok',
-                  id: 'ok'
-                }
-              ]
-            }
-          )
-        }
-        return resp.status == 200
-      }
-
-      return false
-    } catch (e) {
-      console.error('Error emojiSet', e);
-      try {
-        webApp.showPopup(
-          {
-            message: "Error",
-            buttons: [
-              {
-                type: 'ok',
-                id: 'ok'
-              }
-            ]
-          }
-        )
-      } catch (e) { }
-      return false
-    } finally {
-      webApp.MainButton.hideProgress()
-    }
-  }, [duration]);
-
-  const handleMainButtonClick = useCallback(async () => {
-    webApp.MainButton.showProgress(false)
-
-    console.log("size", selectedStickers.length)
-    if (selectedStickers.length > 0) {
-      const firstEmoji = selectedStickers[0];
-      const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
-
-      if (hasAccess) {
-        await save(selectedStickers)
-      } else {
-        webApp.requestEmojiStatusAccess(async (value: boolean) => {
-          const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
-          if (hasAccess)
-            await save(selectedStickers)
-          else
-            webApp.MainButton.hideProgress()
-        })
-      }
-    } else {
-      await save(selectedStickers)
-    }
-  }, [selectedStickers, save]);
-
-  useEffect(() => {
-    webApp.offEvent("mainButtonClicked", handleMainButtonClick);
-    webApp.onEvent("mainButtonClicked", handleMainButtonClick);
-    return () => {
-      webApp.offEvent("mainButtonClicked", handleMainButtonClick);
-    }
-  }, [handleMainButtonClick]);
-
-  const handleCustomEmojiSelect = (sticker: ApiSticker) => {
-    setSelectedStickers(prevStickers => {
-      const existingIndex = prevStickers.findIndex(s => s.id === sticker.id);
-      if (existingIndex !== -1) {
-        const newStickers = [...prevStickers];
-        newStickers.splice(existingIndex, 1);
-        return newStickers;
-      }
-
-      return [...prevStickers, sticker];
-    });
-  };
-
   const renderStickers = () => {
     if (!Array.isArray(stickerSets) || stickerSets.length === 0) {
       return null;
@@ -309,14 +301,10 @@ const AutoStatusApp = memo(() => {
     />
   };
 
-
   const { isMobile } = useAppLayout();
 
-  const headerRef = useRef<HTMLDivElement>(null);
-  const sharedCanvasHqRef = useRef<HTMLCanvasElement>(null);
   useHorizontalScroll(headerRef, isMobile);
 
-  // Scroll container and header when active set changes
   const HEADER_BUTTON_WIDTH = 36
   const activeSetIndex = 0
   useEffect(() => {
@@ -329,7 +317,6 @@ const AutoStatusApp = memo(() => {
 
     animateHorizontalScroll(header, newLeft);
   }, [activeSetIndex]);
-
 
   const headerClassName = buildClassName(
     pickerStyles.header,
@@ -435,10 +422,6 @@ const AutoStatusApp = memo(() => {
             </div>
           )}
         </div>
-        {/* <div
-            ref={headerRef}
-            className={headerClassName}
-          > */}
         <div className={style.selectedStickers}>
           <canvas ref={sharedCanvasHqRef} className="shared-canvas" />
           {
@@ -463,7 +446,6 @@ const AutoStatusApp = memo(() => {
             ))
           }
         </div>
-        {/* </div> */}
       </div>
       <div className={style.durationSliderContainer} ref={sliderRef}>
         <div className={style.durationHeader}>
