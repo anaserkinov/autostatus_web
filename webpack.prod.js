@@ -4,6 +4,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 
+APP_ENV = 'production'
+
+process.env.APP_ENV = APP_ENV
+
 module.exports = merge(common, {
     mode: 'production',
     plugins: [

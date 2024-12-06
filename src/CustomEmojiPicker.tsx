@@ -2,7 +2,7 @@ import type { FC } from './teact/teact';
 import React, {
   memo, useEffect, useMemo, useRef,
 } from './teact/teact';
-import { getGlobal, withGlobal } from './global';
+import { withGlobal } from './global';
 
 import type {
   ApiSticker, ApiStickerSet,

@@ -5,6 +5,8 @@ const path = require('path');
 
 APP_ENV = 'development'
 
+process.env.APP_ENV = APP_ENV
+
 const CSP = `
   default-src 'self';
   connect-src 'self' wss://*.web.telegram.org blob: http: https: ${APP_ENV === 'development' ? 'wss:' : ''};

@@ -186,6 +186,7 @@
       if (index === -1) {
         eventHandlers[eventType].push(callback);
       }
+      console.log("onEvent", eventHandlers[eventType].length)
     };
   
     function offEvent(eventType, callback) {
@@ -197,6 +198,7 @@
         return;
       }
       eventHandlers[eventType].splice(index, 1);
+      console.log("offEvent", eventHandlers[eventType].length)
     };
   
     function openProtoUrl(url) {

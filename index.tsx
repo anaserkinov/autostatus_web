@@ -56,15 +56,13 @@ const hasEmojiAccess = async (customEmojiId: string): Promise<boolean> => {
   }
 }
 
-let mainButtonCallback;
 let initData = ''
 
 const AutoStatusApp = memo(() => {
-  console.log("render")
+  console.log("render app")
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
   const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
   const [duration, setDuration] = useState(10);
-  const [mainButtonEnabled, setMainButtonEnabled] = useState<number>(0);
 
   const [stickerPackHeight, setStickerPackHeight] = useState(235)
   const userImageRef = useRef<HTMLDivElement>(null);
@@ -103,7 +101,6 @@ const AutoStatusApp = memo(() => {
         }));
 
         setSelectedStickers(processedData.stickers)
-        setMainButtonEnabled(processedData.stickers.length)
         setDuration(Math.max(processedData.statusUpdateInterval ?? 10, 10))
       })
       .catch(error => {
@@ -179,111 +176,109 @@ const AutoStatusApp = memo(() => {
       });
   }, []);
 
-  useEffect(() => {
-    const callback = mainButtonCallback
-    if(callback)
-      webApp.offEvent("mainButtonClicked", callback);
-    mainButtonCallback = async () => {
-      const save = async (stikcers: ApiSticker[]) => {
-        console.log("save", stikcers)
-        try {
-          const user = webApp.initDataUnsafe.user
-          if (user != null) {
-            const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
-              method: 'POST',
-              headers: {
-                'initData': `${initData}`,
-                'content-type': 'application/json'
-              },
-              body: JSON.stringify(
-                {
-                  'firstName': `${user.first_name}`,
-                  'username': `${user.username}`,
-                  'languageCode': `${user.language_code}`,
-                  'isPremium': user.is_premium,
-                  'statusUpdateInterval': duration,
-                  'stickers': stikcers.map(sticker => sticker.customEmojiId)
-                }
-              )
-            })
-            if (resp.status == 200) {
-              webApp.HapticFeedback.notificationOccurred("success")
-              webApp.showPopup(
-                {
-                  message: "Saved",
-                  buttons: [
-                    {
-                      type: 'ok'
-                    }
-                  ]
-                }
-              )
-            } else {
-              webApp.HapticFeedback.notificationOccurred("error")
-              webApp.showPopup(
-                {
-                  message: "Error",
-                  buttons: [
-                    {
-                      type: 'ok'
-                    }
-                  ]
-                }
-              )
-            }
-            return resp.status == 200
-          }
 
-          return false
-        } catch (e) {
-          console.error('Error emojiSet', e);
-          webApp.HapticFeedback.notificationOccurred("error")
+  const save = useCallback(async (stickers: ApiSticker[]) => {
+    try {
+      const user = webApp.initDataUnsafe.user
+      if (user != null) {
+        const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
+          method: 'POST',
+          headers: {
+            'initData': `${initData}`,
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify(
+            {
+              'firstName': `${user.first_name}`,
+              'username': `${user.username}`,
+              'languageCode': `${user.language_code}`,
+              'isPremium': user.is_premium ?? false,
+              'statusUpdateInterval': duration,
+              'stickers': stickers.map(sticker => sticker.customEmojiId)
+            }
+          )
+        })
+        if (resp.status == 200) {
+          webApp.showPopup(
+            {
+              message: "Saved",
+              buttons: [
+                {
+                  type: 'ok',
+                  id: 'ok'
+                }
+              ]
+            }
+          )
+        } else {
           webApp.showPopup(
             {
               message: "Error",
               buttons: [
                 {
-                  type: 'ok'
+                  type: 'ok',
+                  id: 'ok'
                 }
               ]
             }
           )
-          return false
-        } finally {
-          webApp.MainButton.hideProgress()
         }
+        return resp.status == 200
       }
 
-      webApp.MainButton.showProgress(false)
+      return false
+    } catch (e) {
+      console.error('Error emojiSet', e);
+      try {
+        webApp.showPopup(
+          {
+            message: "Error",
+            buttons: [
+              {
+                type: 'ok',
+                id: 'ok'
+              }
+            ]
+          }
+        )
+      } catch (e) { }
+      return false
+    } finally {
+      webApp.MainButton.hideProgress()
+    }
+  }, [duration]);
 
-      if (selectedStickers.length > 0) {
-        const firstEmoji = selectedStickers[0];
-        const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
+  const handleMainButtonClick = useCallback(async () => {
+    webApp.MainButton.showProgress(false)
 
-        if (hasAccess) {
-          await save(selectedStickers)
-        } else {
-          webApp.requestEmojiStatusAccess(async (value: boolean) => {
-            const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
-            if (hasAccess)
-              await save(selectedStickers)
-            else
-              webApp.MainButton.hideProgress()
-          })
-        }
-      } else {
+    console.log("size", selectedStickers.length)
+    if (selectedStickers.length > 0) {
+      const firstEmoji = selectedStickers[0];
+      const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
+
+      if (hasAccess) {
         await save(selectedStickers)
+      } else {
+        webApp.requestEmojiStatusAccess(async (value: boolean) => {
+          const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
+          if (hasAccess)
+            await save(selectedStickers)
+          else
+            webApp.MainButton.hideProgress()
+        })
       }
+    } else {
+      await save(selectedStickers)
     }
+  }, [selectedStickers, save]);
 
-    webApp.onEvent("mainButtonClicked", mainButtonCallback);
-
+  useEffect(() => {
+    webApp.offEvent("mainButtonClicked", handleMainButtonClick);
+    webApp.onEvent("mainButtonClicked", handleMainButtonClick);
     return () => {
-      webApp.offEvent("mainButtonClicked", mainButtonCallback);
+      webApp.offEvent("mainButtonClicked", handleMainButtonClick);
     }
-  }, [mainButtonEnabled, duration]);
-
-
+  }, [handleMainButtonClick]);
 
   const handleCustomEmojiSelect = (sticker: ApiSticker) => {
     setSelectedStickers(prevStickers => {
@@ -291,11 +286,9 @@ const AutoStatusApp = memo(() => {
       if (existingIndex !== -1) {
         const newStickers = [...prevStickers];
         newStickers.splice(existingIndex, 1);
-        setMainButtonEnabled(newStickers.length)
         return newStickers;
       }
 
-      setMainButtonEnabled(prevStickers.length + 1)
       return [...prevStickers, sticker];
     });
   };
@@ -422,7 +415,8 @@ const AutoStatusApp = memo(() => {
         <div className={style.userImage}
           style={{
             backgroundImage:
-              DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
+            `url(${webApp.initDataUnsafe.user?.photo_url})`
+              // DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
           }}>
           {selectedStickers.length > 0 && (
             <div className={style.stickerContainer}>
