@@ -81,13 +81,25 @@
 
   &.interactive {
     cursor: var(--custom-cursor, pointer);
+    -webkit-tap-highlight-color: transparent;
 
-    &:hover {
-      background-color: var(--color-interactive-element-hover);
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        background-color: var(--color-interactive-element-hover);
 
-      .sticker-remove-button {
-        opacity: 1;
+        .sticker-remove-button {
+          opacity: 1;
+        }
       }
+
+      &.selected:hover {
+        background-color: color-mix(in srgb, var(--tg-theme-button-color) 50%, transparent);
+      }
+    }
+
+    &:active {
+      background-color: var(--color-interactive-element-hover);
+      transition: background-color 0s;
     }
   }
 

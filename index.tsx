@@ -3,6 +3,7 @@ import './src/util/handleError';
 import React from './src/teact/teact';
 import TeactDOM from './src/teact/teact-dom';
 
+import { enableStrict, requestMutation } from './src/fasterdom/fasterdom';
 import { getGlobal, setGlobal } from './src/global';
 import { memo, useRef, useState, useEffect, useCallback } from './src/teact/teact';
 import StickerView from './src/StickerView';
@@ -12,6 +13,8 @@ import animateHorizontalScroll from './src/util/animateHorizontalScroll';
 import buildClassName from './src/util/buildClassName';
 import useHorizontalScroll from './src/hooks/useHorizontalScroll';
 import useAppLayout from './src/hooks/useAppLayout';
+import { betterView } from './src/util/betterView';
+import updateWebmanifest from './src/util/updateWebmanifest';
 
 import {
   DEBUG,
@@ -77,7 +80,7 @@ const AutoStatusApp = memo(() => {
   const handleCustomEmojiSelect = useCallback((sticker: ApiSticker) => {
     if (isSelecting) return;
     setIsSelecting(true);
-    
+
     setSelectedStickers(prevStickers => {
       const existingIndex = prevStickers.findIndex(s => s.id === sticker.id);
       if (existingIndex !== -1) {
@@ -402,8 +405,8 @@ const AutoStatusApp = memo(() => {
         <div className={style.userImage}
           style={{
             backgroundImage:
-            `url(${webApp.initDataUnsafe.user?.photo_url})`
-              // DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
+              `url(${webApp.initDataUnsafe.user?.photo_url})`
+            // DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
           }}>
           {selectedStickers.length > 0 && (
             <div className={style.stickerContainer}>
@@ -544,4 +547,14 @@ const AutoStatusApp = memo(() => {
   );
 });
 
-TeactDOM.render(<AutoStatusApp />, document.getElementById('root'));
+requestMutation(() => {
+  updateWebmanifest();
+
+  TeactDOM.render(
+    <AutoStatusApp />,
+    document.getElementById('root')
+  );
+
+  betterView();
+});
+

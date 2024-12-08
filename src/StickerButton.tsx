@@ -282,9 +282,9 @@ const StickerButton = <T extends number | ApiSticker | undefined = undefined>({
       className={fullClassName}
       title={title || (sticker?.emoji)}
       data-sticker-id={id}
-      onMouseDown={handleMouseDown}
+      // onMouseDown={handleMouseDown}
       onClick={handleClick}
-      onContextMenu={handleContextMenu}
+      // onContextMenu={handleContextMenu}
     >
       {isIntesectingForShowing && (
         <StickerView
