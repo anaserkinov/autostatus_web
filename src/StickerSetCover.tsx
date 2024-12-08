@@ -48,8 +48,12 @@ const StickerSetCover: FC<OwnProps> = ({
     hasThumbnail, hasVideoThumb, hasAnimatedThumb, hasStaticThumb, thumbCustomEmojiId,
   } = stickerSet;
 
-  const customColor = useDynamicColorListener(containerRef, false);
+  const hasCustomColor = stickerSet.shouldUseTextColor;
+  const customColor = useDynamicColorListener(containerRef, !hasCustomColor);
   const colorFilter = useColorFilter(customColor);
+
+  console.log("hasCustomColor", hasCustomColor)
+  console.log("customColor", customColor)
 
   const isIntersecting = useIsIntersecting(containerRef, observeIntersection);
   const shouldPlay = isIntersecting && !noPlay;
@@ -91,6 +95,7 @@ const StickerSetCover: FC<OwnProps> = ({
             sharedCanvas={sharedCanvasRef?.current || undefined}
             sharedCanvasCoords={coords}
             forceAlways={forcePlayback}
+            color={customColor}
           />
         ) : (
           <img

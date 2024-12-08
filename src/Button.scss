@@ -177,7 +177,7 @@
   &.translucent {
     --ripple-color: var(--color-interactive-element-hover);
     background-color: transparent;
-    color: var(--color-text-secondary);
+    color: var(--tg-theme-text-color);
 
     @include active-styles() {
       background-color: var(--color-interactive-element-hover);

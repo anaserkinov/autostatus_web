@@ -237,9 +237,11 @@ const AutoStatusApp = memo(() => {
           ...set,
           thumbCustomEmojiId: `${baseUrl}/download/${set.thumbCustomEmojiId}`,
           isEmoji: true,
+          shouldUseTextColor: set.needsRepainting,
           stickers: set.stickers.map(sticker => ({
             ...sticker,
             id: `${baseUrl}/download/${sticker.id}`,
+            shouldUseTextColor: set.needsRepainting,
             thumbnail: sticker.thumbnail ? {
               dataUri: `${baseUrl}/download/${sticker.thumbnail.dataUri}`
             } : undefined,

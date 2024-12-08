@@ -47,4 +47,5 @@ export interface ApiStickerSet {
   packs?: Record<string, ApiSticker[]>;
   covers?: ApiSticker[];
   shortName: string;
+  shouldUseTextColor?: boolean;
 }
