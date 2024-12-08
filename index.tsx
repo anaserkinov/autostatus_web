@@ -64,7 +64,6 @@ let initData = ''
 const AutoStatusApp = memo(() => {
   console.log("render app")
   const [stickerSets, setStickerSets] = useState<ApiStickerSet[]>([]);
-  const [selectedStickers, setSelectedStickers] = useState<ApiSticker[]>([]);
   const [duration, setDuration] = useState(10);
   const [mainButtonEnabled, setMainButtonEnabled] = useState<number>(0);
 
@@ -75,25 +74,33 @@ const AutoStatusApp = memo(() => {
   const sliderRef = useRef<HTMLDivElement>(null)
   const sharedCanvasHqRef = useRef<HTMLCanvasElement>(null)
 
-  const [isSelecting, setIsSelecting] = useState(false);
+  const selectedStickersRef = useRef<ApiSticker[]>([]);
+  const isSelectingRef = useRef(false);
+  const updateTimeoutRef = useRef<number>();
+  const [, forceRender] = useState({});
 
   const handleCustomEmojiSelect = useCallback((sticker: ApiSticker) => {
-    if (isSelecting) return;
-    setIsSelecting(true);
+    if (isSelectingRef.current) return;
+    isSelectingRef.current = true;
 
-    setSelectedStickers(prevStickers => {
-      const existingIndex = prevStickers.findIndex(s => s.id === sticker.id);
-      if (existingIndex !== -1) {
-        return prevStickers.filter(s => s.id !== sticker.id);
-      }
-      return [...prevStickers, sticker];
-    });
+    const existingIndex = selectedStickersRef.current.findIndex(s => s.id === sticker.id);
+    if (existingIndex !== -1) {
+      selectedStickersRef.current = selectedStickersRef.current.filter(s => s.id !== sticker.id);
+    } else {
+      selectedStickersRef.current = [...selectedStickersRef.current, sticker];
+    }
 
-    // Reset selection lock after a short delay
-    setTimeout(() => {
-      setIsSelecting(false);
-    }, 100);
-  }, [isSelecting]);
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    updateTimeoutRef.current = window.setTimeout(() => {
+      requestMutation(() => {
+        forceRender({});
+        isSelectingRef.current = false;
+      });
+    }, 100) as unknown as number;
+  }, []);
 
   const save = useCallback(async (stickers: ApiSticker[]) => {
     try {
@@ -153,26 +160,26 @@ const AutoStatusApp = memo(() => {
   }, [duration]);
 
   const handleMainButtonClick = useCallback(async () => {
-    if (selectedStickers.length > 0) {
-      const firstEmoji = selectedStickers[0];
+    if (selectedStickersRef.current.length > 0) {
+      const firstEmoji = selectedStickersRef.current[0];
       const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
 
       if (hasAccess) {
-        await save(selectedStickers)
+        await save(selectedStickersRef.current)
       } else {
         webApp.requestEmojiStatusAccess(async (value: boolean) => {
           const hasAccess = await hasEmojiAccess(firstEmoji.customEmojiId)
           if (hasAccess) {
-            await save(selectedStickers)
+            await save(selectedStickersRef.current)
           } else {
             webApp.MainButton.hideProgress()
           }
         })
       }
     } else {
-      await save(selectedStickers)
+      await save(selectedStickersRef.current)
     }
-  }, [selectedStickers, save]);
+  }, [save]);
 
   useEffect(() => {
     const handler = handleMainButtonClick;
@@ -212,7 +219,7 @@ const AutoStatusApp = memo(() => {
           } : undefined,
         }));
 
-        setSelectedStickers(processedData.stickers)
+        selectedStickersRef.current = processedData.stickers
         setDuration(Math.max(processedData.statusUpdateInterval ?? 10, 10))
       })
       .catch(error => {
@@ -298,7 +305,7 @@ const AutoStatusApp = memo(() => {
       isStatusPicker={true}
       loadAndPlay={true}
       isTranslucent={false}
-      selectedReactionIds={selectedStickers.map(s => s.id)}
+      selectedReactionIds={selectedStickersRef.current.map(s => s.id)}
       onCustomEmojiSelect={handleCustomEmojiSelect}
       customHeight={stickerPackHeight}
     />
@@ -406,16 +413,15 @@ const AutoStatusApp = memo(() => {
           style={{
             backgroundImage:
               `url(${webApp.initDataUnsafe.user?.photo_url})`
-            // DEBUG ? `url(${baseUrl}/download/thumbnails/image.jpg)` : `url(${webApp.initDataUnsafe.user?.photo_url})`
           }}>
-          {selectedStickers.length > 0 && (
+          {selectedStickersRef.current.length > 0 && (
             <div className={style.stickerContainer}>
               <div
                 className={`${style.stickerButton} StickerButton`}
                 ref={userImageRef}>
                 <StickerView
                   containerRef={userImageRef}
-                  sticker={selectedStickers[0]}
+                  sticker={selectedStickersRef.current[0]}
                   size={40}
                   noPlay={false}
                   shouldLoop={true}
@@ -428,8 +434,9 @@ const AutoStatusApp = memo(() => {
         <div className={style.selectedStickers}>
           <canvas ref={sharedCanvasHqRef} className="shared-canvas" />
           {
-            selectedStickers.map((sticker) => (
+            selectedStickersRef.current.map((sticker) => (
               <div
+                key={sticker.id}
                 className='StickerButton'
                 ref={userImageRef}
                 style={{
@@ -557,4 +564,3 @@ requestMutation(() => {
 
   betterView();
 });
-
