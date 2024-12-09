@@ -79,6 +79,8 @@ const AutoStatusApp = memo(() => {
   const updateTimeoutRef = useRef<number>();
   const [, forceRender] = useState({});
 
+  const [isLoading, setIsLoading] = useState(true);
+
   const handleCustomEmojiSelect = useCallback((sticker: ApiSticker) => {
     if (isSelectingRef.current) return;
     isSelectingRef.current = true;
@@ -203,7 +205,7 @@ const AutoStatusApp = memo(() => {
   useEffect(() => {
     webApp.ready();
 
-    fetch('https://autostatus.nashruz.uz/app/user', {
+    fetch(`${baseUrl}/user`, {
       headers: {
         'initData': `${initData}`
       }
@@ -226,13 +228,16 @@ const AutoStatusApp = memo(() => {
         console.error('Error fetching sticker sets:', error);
       });
 
-    fetch('https://autostatus.nashruz.uz/app/stickers', {
-      headers: {
-        'initData': `${initData}`
-      }
-    })
-      .then(response => response.json())
-      .then(data => {
+    setIsLoading(true);
+    
+    const loadStickers = async () => {      
+      try {
+        const response = await fetch(`${baseUrl}/stickers`, {
+          headers: {
+            'initData': `${initData}`
+          }
+        });
+        const data = await response.json();
         const processedData = data.result.map(set => ({
           ...set,
           thumbCustomEmojiId: `${baseUrl}/download/${set.thumbCustomEmojiId}`,
@@ -247,12 +252,13 @@ const AutoStatusApp = memo(() => {
             } : undefined,
           }))
         }));
+        
         const setsById = processedData.reduce((acc, set) => {
           acc[set.id] = set;
           return acc;
         }, {} as Record<string, any>);
 
-        const setIds = processedData.map(set => set.id)
+        const setIds = processedData.map(set => set.id);
 
         setGlobal({
           ...getGlobal(),
@@ -291,13 +297,25 @@ const AutoStatusApp = memo(() => {
         });
 
         setStickerSets(processedData);
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error fetching sticker sets:', error);
-      });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStickers();
   }, []);
 
   const renderStickers = () => {
+    if (isLoading) {
+      return (
+        <div className={style.Loading} style={{ height: stickerPackHeight }}>
+          <div className={style.Spinner} />
+        </div>
+      );
+    }
+
     if (!Array.isArray(stickerSets) || stickerSets.length === 0) {
       return null;
     }
@@ -310,7 +328,7 @@ const AutoStatusApp = memo(() => {
       selectedReactionIds={selectedStickersRef.current.map(s => s.id)}
       onCustomEmojiSelect={handleCustomEmojiSelect}
       customHeight={stickerPackHeight}
-    />
+    />;
   };
 
   const { isMobile } = useAppLayout();

@@ -168,3 +168,29 @@
   width: 40px;
   position: relative;
 }
+
+.Loading {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+
+  &.interactive {
+    cursor: var(--custom-cursor, pointer);
+  }
+
+  .Spinner {
+    border-top: 3px solid var(--tg-theme-button-color); 
+    border-left: 3px solid var(--tg-theme-button-color); 
+    border-radius: 80px;
+    width: 60px; 
+    height: 60px;
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
