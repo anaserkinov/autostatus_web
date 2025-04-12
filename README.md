@@ -10,4 +10,4 @@ Auto Status is a Telegram bot designed to automate status updates. This reposito
 Issues, bug fixes, and performance optimizations are open for contributions. Pull requests are encouraged.  
 
 
-[Try Auto Status on Telegram](https://t.me/autostatusbot)  
+[Try Auto Status on Telegram](https://t.me/autostatusrobot)  
