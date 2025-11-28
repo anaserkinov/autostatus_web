@@ -19,16 +19,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react"
+    "jsx": "react",
   },
     "include": [
       "src",
-      "tests",
-      "plugins",
-      "dev",
-      "webpack.config.ts",
-      "webpack-electron.config.ts",
-      "babel.config.js",
+      "webpack.common.js",
+      "babel.config.js"
     ]
   }
   

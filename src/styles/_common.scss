@@ -1,0 +1,236 @@
+@use "mixins";
+
+// Common styles for all media-type components across the app.
+.media-inner {
+  position: relative;
+
+  video.full-media,
+  img.full-media,
+  img.thumbnail,
+  canvas.thumbnail {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  .full-media.with-blurred-bg {
+    position: relative;
+    border-radius: 0 !important;
+  }
+
+  video {
+    background: no-repeat 50% 50%;
+    background-size: contain;
+  }
+
+  .thumbnail {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    &.with-blurred-bg {
+      border-radius: 0 !important;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+
+  .media-loading {
+    position: absolute;
+  }
+
+  &.fix-min-height {
+    min-height: 5rem;
+  }
+}
+
+.animated-close-icon {
+  position: absolute;
+  transform: rotate(-45deg);
+
+  &,
+  &::before,
+  &::after {
+    width: 1.125rem;
+    height: 0.125rem;
+    border-radius: 0.125rem;
+    background-color: var(--color-text-secondary);
+    transition: transform var(--slide-transition);
+  }
+
+  &::before,
+  &::after {
+    position: absolute;
+    left: 0;
+    top: 0;
+    content: "";
+  }
+
+  &::before {
+    transform: rotate(90deg);
+  }
+
+  &.no-transition {
+    &,
+    &::before,
+    &::after {
+      transition: none;
+    }
+  }
+
+  &.state-back {
+    transform: rotate(180deg);
+
+    &::before {
+      transform: rotate(45deg) scaleX(0.75) translate(0, -0.375rem);
+    }
+
+    &::after {
+      transform: rotate(-45deg) scaleX(0.75) translate(0, 0.375rem);
+    }
+  }
+}
+
+.overscroll-trigger {
+  display: none;
+  height: 1px;
+}
+
+// Used by ChatList and ContactList components
+.chat-list {
+  background: var(--color-background);
+  height: 100%;
+  padding: 0.5rem;
+
+  @include mixins.adapt-padding-to-scrollbar(0.5rem);
+
+  overflow-x: hidden;
+  overflow-y: scroll;
+
+  &.forum-panel-open {
+    .info {
+      opacity: 0;
+      transform: translateX(-20%);
+    }
+
+    .Chat[dir="rtl"] .info {
+      transform: translateX(20%);
+    }
+
+    .Avatar {
+      transform: scale(0.9);
+    }
+  }
+
+  @media (min-width: 600px) {
+    &.forum-panel-open .selected-forum .Avatar {
+      transform: none;
+    }
+  }
+
+  .scroll-container {
+    position: relative;
+  }
+
+  .no-results {
+    color: var(--color-text-meta);
+    margin-top: 2rem;
+    text-align: center;
+  }
+
+  .Avatar {
+    transition: transform var(--layer-transition);
+
+    body.no-page-transitions & {
+      transition: none;
+    }
+  }
+
+  .ListItem {
+    &.chat-item-clickable {
+      margin: 0;
+    }
+  }
+
+  @media (max-width: 600px) {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.is-ios &,
+  body.is-android & {
+    padding-left: 0;
+    padding-right: 0;
+
+    .ListItem::after {
+      opacity: 1;
+      transition: opacity var(--layer-transition);
+    }
+
+    &.forum-panel-open {
+      .ListItem::after {
+        opacity: 0;
+      }
+    }
+  }
+}
+
+// Used by Avatar and ProfilePhoto components
+.Avatar, .ProfilePhoto {
+  --color-user: var(--accent-color);
+
+  &.replies-bot-account,
+  &.anonymous-forwards,
+  &.saved-messages {
+    --color-user: var(--color-primary);
+  }
+
+  &.deleted-account {
+    --color-user: var(--color-deleted-account);
+  }
+}
+
+.fab-padding-bottom {
+  padding-bottom: 5rem !important;
+}
+
+.with-story-ribbon {
+  --story-ribbon-height: 5.5rem;
+
+  height: calc(100% - var(--extra-height, 0px) + var(--story-ribbon-height)) !important;
+  transform: translateY(calc(var(--story-ribbon-height) * -1));
+
+  &.open, &.closing {
+    transition: transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  &.open {
+    transform: translateY(0);
+  }
+}
+
+// Update this value when new server colors are added
+@for $i from 0 through 25 {
+  .peer-color-#{$i} {
+    --accent-color: var(--color-peer-#{$i}, var(--color-text));
+    --bar-gradient: var(--color-peer-gradient-#{$i});
+    --accent-background-color: var(--color-peer-bg-#{$i}, var(--hover-color));
+    --accent-background-active-color: var(--color-peer-bg-active-#{$i}, var(--active-color));
+  }
+}
+
+.peer-color-count-1,
+.peer-color-count-2,
+.peer-color-count-3 {
+  --accent-background-color: var(--hover-color);
+  --accent-background-active-color: var(--active-color);
+}
+
+.peer-color-count-2 {
+  @include mixins.peer-gradient(--bar-gradient, 2);
+}
+
+.peer-color-count-3 {
+  @include mixins.peer-gradient(--bar-gradient, 3);
+}
