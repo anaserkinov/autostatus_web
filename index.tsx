@@ -36,11 +36,11 @@ export interface ApiUser {
 
 (window as any).isCompatTestPassed = true;
 
-const baseUrl = 'https://autostatus.nashruz.uz/app';
+const baseUrl = 'https://api.anasmusa.me/autostatus';
 
 const hasEmojiAccess = async (customEmojiId: string): Promise<boolean> => {
   try {
-    const resp = await fetch('https://autostatus.nashruz.uz/app/emojiSet', {
+    const resp = await fetch(`${baseUrl}/emojiSet`, {
       method: 'POST',
       headers: {
         'initData': `${initData}`,
@@ -109,7 +109,7 @@ const AutoStatusApp = memo(() => {
       const user = webApp.initDataUnsafe.user
       if (user != null) {
         webApp.MainButton.showProgress(false)
-        const resp = await fetch('https://autostatus.nashruz.uz/app/user', {
+        const resp = await fetch(`${baseUrl}/user`, {
           method: 'POST',
           headers: {
             'initData': `${initData}`,
